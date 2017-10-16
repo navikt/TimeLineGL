@@ -39,35 +39,57 @@ void main() {
 }
 `;
 
+var gl;
+var canvas;
+
+var program;
+var positionAttributeLocation;
+var resolutionUniformLocation;
+var colorLocation;
+
+var positionBuffer;
+var vao;
+
+
 function main() {
   // Get A WebGL context
-  var canvas = document.getElementById("c");
-  var gl = canvas.getContext("webgl2");
+  canvas = document.getElementById("c");
+  gl = canvas.getContext("webgl2");
   if (!gl) {
     return;
   }
+
+
+  window.addEventListener('resize', resizeXXX, false);
 
   canvas.onmousedown = handleMouseDown;
 
   canvas.onmousewheel = handleMouseWheel;
 
+  resizeXXX(null);
 
   // Use our boilerplate utils to compile the shaders and link into a program
-  var program = webglUtils.createProgramFromSources(gl,
+  program = webglUtils.createProgramFromSources(gl,
     [vertexShaderSource, fragmentShaderSource]);
 
   // look up where the vertex data needs to go.
-  var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
+  positionAttributeLocation = gl.getAttribLocation(program, "a_position");
 
   // look up uniform locations
-  var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
-  var colorLocation = gl.getUniformLocation(program, "u_color");
+  resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
+  colorLocation = gl.getUniformLocation(program, "u_color");
 
   // Create a buffer
-  var positionBuffer = gl.createBuffer();
+  positionBuffer = gl.createBuffer();
 
   // Create a vertex array object (attribute state)
-  var vao = gl.createVertexArray();
+  vao = gl.createVertexArray();
+
+  render();
+
+}
+
+function render() {
 
   // and make it the one we're currently working with
   gl.bindVertexArray(vao);
@@ -121,21 +143,83 @@ function main() {
     var count = 6;
     gl.drawArrays(primitiveType, offset, count);
   }
+
+  // Draw content border frame
+  var x0 = 0;
+  var y0 = 0;
+  var x1 = 900;
+  var y1 = 400;
+
+  var thickness = 3;
+
+  // Red
+  gl.uniform4f(colorLocation, 1.0, 0, 0, 1);
+
+  setRectangle(gl, x0, y0, x1 - x0, thickness);
+
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+  setRectangle(gl, x0, y1 - thickness, x1 - x0, thickness);
+
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+  setRectangle(gl, x0, y0, thickness, y1 - y0);
+
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+  setRectangle(gl, x1 - thickness, y0, thickness, y1 - y0);
+
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+
+
+
 }
 
-var lastMouseX;
-var lastMouseY;
+
+function resizeXXX(event) {
+  
+
+  console.log('resizeXXX');
+
+  gl.canvas.width = window.innerWidth;
+  gl.canvas.height = window.innerHeight;
+
+  render();
+
+}
+
+function logCanvasSize()
+{
+  var x = gl.canvas.width;
+  var y = gl.canvas.height;
+
+  console.log('gl.canvas size = (' + x + ',' + y + ')');
+}
+
 
 function handleMouseDown(event) {
   
-  lastMouseX = event.clientX;
-  lastMouseY = event.clientY;
+  var x = event.clientX;
+  var y = event.clientY;
+
+  logCanvasSize();
+
+  console.log('handleMouseDown at (' + x + ',' + y + ')');
+
+  var xw = window.innerWidth;
+  var yw = window.innerHeight;
+
 }
 
 function handleMouseWheel(event) {
 
-  lastMouseX = event.clientX;
-  lastMouseY = event.clientY;
+  var x = event.clientX;
+  var y = event.clientY;
+
+  var d = event.wheelDelta;
+
+  console.log('handleMouseWheel: delta ' + d + ' at (' + x + ',' + y + ')');
 }
 
 
