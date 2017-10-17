@@ -9,11 +9,17 @@ in vec2 a_position;
 // Used to pass in the resolution of the canvas
 uniform vec2 u_resolution;
 
+// Used to pass in the resolution of the canvas
+uniform vec2 pixel_offset;
+
+
 // all shaders have a main function
 void main() {
 
+  vec2 offsetpixel = a_position - pixel_offset;
+
   // convert the position from pixels to 0.0 to 1.0
-  vec2 zeroToOne = a_position / u_resolution;
+  vec2 zeroToOne = offsetpixel / u_resolution;
 
   // convert from 0->1 to 0->2
   vec2 zeroToTwo = zeroToOne * 2.0;
@@ -45,10 +51,14 @@ var canvas;
 var program;
 var positionAttributeLocation;
 var resolutionUniformLocation;
+var offsetLocation;
 var colorLocation;
 
 var positionBuffer;
 var vao;
+
+var offsetX = 0;
+var offsetY = 0;
 
 
 function main() {
@@ -63,10 +73,12 @@ function main() {
   window.addEventListener('resize', resizeXXX, false);
 
   canvas.onmousedown = handleMouseDown;
+  canvas.onmouseup = handleMouseUp;
+  canvas.onmousemove = handleMouseMove;
 
   canvas.onmousewheel = handleMouseWheel;
 
-  resizeXXX(null);
+
 
   // Use our boilerplate utils to compile the shaders and link into a program
   program = webglUtils.createProgramFromSources(gl,
@@ -79,11 +91,15 @@ function main() {
   resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
   colorLocation = gl.getUniformLocation(program, "u_color");
 
+  offsetLocation = gl.getUniformLocation(program, "pixel_offset");
+
   // Create a buffer
   positionBuffer = gl.createBuffer();
 
   // Create a vertex array object (attribute state)
   vao = gl.createVertexArray();
+
+  resizeXXX(null);
 
   render();
 
@@ -128,11 +144,17 @@ function render() {
   // pixels to clipspace in the shader
   gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
+
+  var
+    y = getOffsetY();
+
+  gl.uniform2f(offsetLocation, 0, -y);
+
   // draw 50 random rectangles in random colors
   for (var ii = 0; ii < 50; ++ii) {
     // Put a rectangle in the position buffer
     setRectangle(
-      gl, randomInt(300), randomInt(300), randomInt(600), 3);
+      gl, randomInt(gl.canvas.width), randomInt(gl.canvas.height), gl.canvas.width, 3);
 
     // Set a random color.
     gl.uniform4f(colorLocation, Math.random(), Math.random(), Math.random(), 1);
@@ -147,10 +169,10 @@ function render() {
   // Draw content border frame
   var x0 = 0;
   var y0 = 0;
-  var x1 = 900;
-  var y1 = 400;
+  var x1 = gl.canvas.width;
+  var y1 = gl.canvas.height - 80;
 
-  var thickness = 3;
+  var thickness = 7;
 
   // Red
   gl.uniform4f(colorLocation, 1.0, 0, 0, 1);
@@ -197,11 +219,66 @@ function logCanvasSize()
   console.log('gl.canvas size = (' + x + ',' + y + ')');
 }
 
+var isDragging = false;
+
+
+var x_down;
+var y_down;
+
+var x_current;
+var y_current;
+
+function handleMouseUp(event) {
+
+  if (event.button != 0) {
+    return;
+  }
+
+  isDragging = false;
+
+  offsetX += (x_current - x_down);
+  offsetY += (y_current - y_down);
+
+  console.log('handleMouseUp delta (' + (x_current - x_down) + ',' + (y_current - y_down) + ')');
+
+  render();
+}
+
+function getOffsetY()
+{
+  if (isDragging) {
+    return offsetY + (y_current - y_down);
+  }
+  else {
+    return offsetY;
+  }
+
+
+}
+
+function handleMouseMove(event) {
+
+  x_current = event.clientX;
+  y_current = event.clientY;
+}
 
 function handleMouseDown(event) {
-  
+
+  if (event.button != 0)
+  {
+    return;
+  }
+
+  isDragging = true;
+
   var x = event.clientX;
   var y = event.clientY;
+
+  x_down = x;
+  y_down = y;
+
+  x_current = x_down;
+  y_current = y_down;
 
   logCanvasSize();
 
