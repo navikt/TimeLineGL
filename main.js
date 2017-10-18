@@ -17,11 +17,14 @@ uniform vec2 u_contents_size;
 
 uniform vec2 pixel_offset;
 
+uniform float y_scale;
 
 // all shaders have a main function
 void main() {
  
   vec2 offsetpixel = a_position.xy - pixel_offset;
+
+  offsetpixel.y *= y_scale;
 
   // convert the position from pixels to 0.0 to 1.0
   vec2 zeroToOne = offsetpixel / u_resolution;
@@ -76,6 +79,8 @@ var resolutionUniformLocation;
 var contentsizeUniformLocation;
 var offsetLocation;
 
+var y_scaleLocation;
+
 var positionBuffer;
 var vao;
 
@@ -83,10 +88,12 @@ var offsetX = 0;
 var offsetY = 0;
 
 var W = 300;
-var H = 150;
+var H = 97970;
 
+var nRectangles = 300000;
 
-var cpu_data;
+var y_scale = 1;
+
 
 function NOTNULL(value) {
   if (value == null) {
@@ -131,6 +138,10 @@ function main() {
 
   canvas.onmousewheel = handleMouseWheel;
 
+  // Create a buffer
+  positionBuffer = gl.createBuffer();
+
+
   build_rectangles_host(W, H);
 
   // Use our boilerplate utils to compile the shaders and link into a program
@@ -149,8 +160,7 @@ function main() {
   
   offsetLocation = GetUniformLocation("pixel_offset", true);
 
-  // Create a buffer
-  positionBuffer = gl.createBuffer();
+  y_scaleLocation = GetUniformLocation("y_scale", true);
 
   // Create a vertex array object (attribute state)
   vao = gl.createVertexArray();
@@ -201,7 +211,6 @@ function build_single_rectangle_host(f, iOffset, w, h)
 
 function build_rectangles_host(w, h)
 {
-  var nRectangles = 50;
 
   var nVertexPerRectangle = 6;
 
@@ -209,7 +218,7 @@ function build_rectangles_host(w, h)
 
   var nElementsPerRectangle = nVertexPerRectangle * nElementsPerVertex;
 
-  cpu_data = new Float32Array(nRectangles * nElementsPerRectangle);
+  var cpu_data = new Float32Array(nRectangles * nElementsPerRectangle);
 
   for (var iRectangle = 0; iRectangle < nRectangles; iRectangle++)
   {
@@ -218,6 +227,12 @@ function build_rectangles_host(w, h)
 
     build_single_rectangle_host(cpu_data, iOffset, w, h);
   }
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, cpu_data, gl.STATIC_DRAW);
+
+  cpu_data = null;
+  
 }
 
 function render_new() {
@@ -227,7 +242,7 @@ function render_new() {
   gl.enableVertexAttribArray(positionAttributeLocation);
 
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-
+  // gl.bufferData(gl.ARRAY_BUFFER, cpu_data, gl.STATIC_DRAW);
   // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
   var size = 3;          // 3 components per iteration
   var type = gl.FLOAT;   // the data is 32bit floats
@@ -267,40 +282,46 @@ function render_new() {
 
   gl.uniform2f(offsetLocation, 0, -y);
 
-  gl.bufferData(gl.ARRAY_BUFFER, cpu_data, gl.STATIC_DRAW);    
+  gl.uniform1f(y_scaleLocation, y_scale);
+
+  // gl.bufferData(gl.ARRAY_BUFFER, cpu_data, gl.STATIC_DRAW);    
 
   // Draw the rectangles.
 
   var offset = 0;
-  var count = 50 * 6;
+  var count = nRectangles * 6;
   gl.drawArrays(gl.TRIANGLES, offset, count);
 
 
   // Draw content border frame
-  var x0 = 0;
-  var y0 = 0;
-  var x1 = W;
-  var y1 = H - 80;
+  var is_draw_frame = false;
 
-  var thickness = 7;
+  if (is_draw_frame) {
 
+    var x0 = 0;
+    var y0 = 0;
+    var x1 = W;
+    var y1 = H;
 
+    var thickness = 7;
 
-  setRectangle(gl, x0, y0, x1 - x0, thickness, 0.3);
+    setRectangle(gl, x0, y0, x1 - x0, thickness, 0.3);
 
-  gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-  setRectangle(gl, x0, y1 - thickness, x1 - x0, thickness, 0.3);
+    setRectangle(gl, x0, y1 - thickness, x1 - x0, thickness, 0.3);
 
-  gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-  setRectangle(gl, x0, y0, thickness, y1 - y0, 0.3);
+    setRectangle(gl, x0, y0, thickness, y1 - y0, 0.3);
 
-  gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-  setRectangle(gl, x1 - thickness, y0, thickness, y1 - y0, 0.3);
+    setRectangle(gl, x1 - thickness, y0, thickness, y1 - y0, 0.3);
 
-  gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+  }
 }
 
 function render() {
@@ -355,10 +376,10 @@ function handleMouseUp(event) {
 function getOffsetY()
 {
   if (isDragging) {
-    return offsetY + (y_current - y_down);
+    return (offsetY + (y_current - y_down))/ y_scale;
   }
   else {
-    return offsetY;
+    return  offsetY/ y_scale;
   }
 
 
@@ -390,7 +411,13 @@ function handleMouseDown(event) {
 
   logCanvasSize();
 
-  console.log('handleMouseDown at (' + x + ',' + y + ')');
+  var rect = canvas.getBoundingClientRect();
+
+  var x_corr = x - rect.left;
+  var y_corr = y - rect.top;
+
+
+  console.log('handleMouseDown at (' + x_corr + ',' + y_corr + ')');
 
   var xw = window.innerWidth;
   var yw = window.innerHeight;
@@ -405,6 +432,20 @@ function handleMouseWheel(event) {
   var d = event.wheelDelta;
 
   console.log('handleMouseWheel: delta ' + d + ' at (' + x + ',' + y + ')');
+
+  if (d > 0)
+  {
+    y_scale *= 1.1;
+
+  }
+  else {
+    y_scale /= 1.1;
+
+  }
+  console.log('handleMouseWheel: y_scale = ' + y_scale);
+
+  render();
+ 
 }
 
 
