@@ -59,13 +59,17 @@ out vec4 outColor;
 in float colorValue;
 
 void main() {
-  if (colorValue > 0.3)
+  if (colorValue < 0.3)
   {
-   outColor = vec4(colorValue, colorValue, colorValue, 1);
+   outColor = vec4(colorValue, colorValue * .3,0, 1);
+  }
+  else if (colorValue < 0.6)
+  {
+    outColor = vec4(0, colorValue, 0, 1);
   }
   else
   {
-  outColor = vec4(1, colorValue, colorValue, 1);
+    outColor = vec4(0, 0, colorValue, 1);
   }
   
 }
@@ -90,20 +94,11 @@ var offsetX = 0;
 var offsetY = 0;
 
 var W = 300;
-var H = 97970;
+var H = 35000;
 
-var nRectangles = 300000;
+var nRectangles = 30000;
 
 var y_scale = 1;
-
-var cm;
-
-
-function NOTNULL(value) {
-  if (value == null) {
-    alert("Null value detected");
-  }
-}
 
 function GetUniformLocation(string, isWarn)
 {
@@ -115,23 +110,49 @@ function GetUniformLocation(string, isWarn)
     alert("GetUniformLocation: '" + string + "' not found");
   }
 
-
   return location;
+}
 
+function LoadData() {
+
+  var xmlhttp = new XMLHttpRequest();
+  var url = "myData.txt";
+
+  console.log("LoadData()"); 
+
+  xmlhttp.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+      console.log(this.responseText);
+
+      //var myArr = JSON.parse(this.responseText);
+      //myFunction(myArr);
+    }
+    else {
+
+      console.log("readyState = " + this.readyState + ", status = " + this.status);
+
+    }
+  };
+  xmlhttp.open("GET", url, true);
+  xmlhttp.send();
 
 }
 
 
 function main() {
 
- 
+  LoadData();
 
+
+  console.log("LoadData has been issued");
   // Get A WebGL context
   canvas = document.getElementById("c");
   gl = canvas.getContext("webgl2");
   if (!gl) {
     return;
   }
+
+  logCanvasSize();
 
 
   window.addEventListener('resize', resizeXXX, false);
@@ -169,18 +190,22 @@ function main() {
   // Create a vertex array object (attribute state)
   vao = gl.createVertexArray();
 
-  resizeXXX(null);
-
-  render();
+   render();
 
 }
 
 
 function build_single_rectangle_host(f, iOffset, w, h)
 {
+  var bin_size = 12;
+
   var x1 = randomInt(w);
-  var x2 = x1 + randomInt(w);
+  var x2 = x1 + randomInt(w* .1);
   var y1 = randomInt(h);
+
+
+  y1 = Math.round(y1 / bin_size) * bin_size;
+
   var y2 = y1 + 7;
 
   var
@@ -354,7 +379,6 @@ function logCanvasSize()
 
 var isDragging = false;
 
-
 var x_down;
 var y_down;
 
@@ -385,8 +409,6 @@ function getOffsetY()
   else {
     return  offsetY/ y_scale;
   }
-
-
 }
 
 function handleMouseMove(event) {
@@ -414,6 +436,8 @@ function trace(y_mouse) {
 
  
   console.log('trace at screen y =' + screen_y + ' gives content y = ' + content_y);
+
+
   
 }
 
