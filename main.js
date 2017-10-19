@@ -1,4 +1,6 @@
-"use strict"
+
+"use strict";
+
 
 var vertexShaderSource = `#version 300 es
 
@@ -93,6 +95,8 @@ var H = 97970;
 var nRectangles = 300000;
 
 var y_scale = 1;
+
+var cm;
 
 
 function NOTNULL(value) {
@@ -254,7 +258,7 @@ function render_new() {
   gl.vertexAttribPointer(
     positionAttributeLocation, size, type, normalize, stride, offset);
 
-  webglUtils.resizeCanvasToDisplaySize(gl.canvas);
+  // webglUtils.resizeCanvasToDisplaySize(gl.canvas);
 
   // Tell WebGL how to convert from clip space to pixels
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -333,8 +337,8 @@ function resizeXXX(event) {
 
   console.log('resizeXXX');
 
-  gl.canvas.width = window.innerWidth;
-  gl.canvas.height = window.innerHeight;
+  //gl.canvas.width = window.innerWidth;
+  //gl.canvas.height = window.innerHeight;
 
   render();
 
@@ -387,8 +391,30 @@ function getOffsetY()
 
 function handleMouseMove(event) {
 
-  x_current = event.clientX;
-  y_current = event.clientY;
+  var rect = canvas.getBoundingClientRect();
+
+  x_current = event.clientX - rect.left;
+  y_current = event.clientY - rect.top;
+
+  if (isDragging)
+  {
+    render();
+  }
+}
+
+function trace(y_mouse) {
+
+  console.log('trace at y=' + y_mouse);
+
+  var
+    screen_y = y_mouse;
+
+  var
+    content_y = (screen_y - offsetY) / y_scale;
+
+ 
+  console.log('trace at screen y =' + screen_y + ' gives content y = ' + content_y);
+  
 }
 
 function handleMouseDown(event) {
@@ -398,57 +424,55 @@ function handleMouseDown(event) {
     return;
   }
 
+  var rect = canvas.getBoundingClientRect();
+
   isDragging = true;
 
-  var x = event.clientX;
-  var y = event.clientY;
+  x_down = event.clientX - rect.left;
+  y_down = event.clientY - rect.top;
 
-  x_down = x;
-  y_down = y;
+  trace(y_down);
 
   x_current = x_down;
   y_current = y_down;
 
   logCanvasSize();
 
-  var rect = canvas.getBoundingClientRect();
-
-  var x_corr = x - rect.left;
-  var y_corr = y - rect.top;
-
-
-  console.log('handleMouseDown at (' + x_corr + ',' + y_corr + ')');
-
-  var xw = window.innerWidth;
-  var yw = window.innerHeight;
-
+  console.log('handleMouseDown at (' + x_down + ',' + y_down + ')');
 }
 
 function handleMouseWheel(event) {
 
-  var x = event.clientX;
-  var y = event.clientY;
+  var rect = canvas.getBoundingClientRect();
+
+  var x = event.clientX - rect.left;
+  var y = event.clientY - rect.top;
 
   var d = event.wheelDelta;
 
+  var y_scale0 = y_scale;
+  var offsetY0 = offsetY;
+
   console.log('handleMouseWheel: delta ' + d + ' at (' + x + ',' + y + ')');
+  
+  var
+    content_y0 = (y - offsetY0) / y_scale0;
 
-  if (d > 0)
-  {
+  if (d > 0) {
     y_scale *= 1.1;
-
-  }
-  else {
+  } else {
     y_scale /= 1.1;
-
   }
-  console.log('handleMouseWheel: y_scale = ' + y_scale);
+
+  // set offset so that content_y0 = content_y1
+
+  offsetY = y - content_y0 * y_scale;
+
+  var
+    content_y1 = (y - offsetY) / y_scale;
 
   render();
- 
 }
-
-
 
 // Returns a random integer from 0 to range - 1.
 function randomInt(range) {
