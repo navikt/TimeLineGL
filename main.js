@@ -61,15 +61,15 @@ in float colorValue;
 void main() {
   if (colorValue < 0.3)
   {
-   outColor = vec4(colorValue, colorValue * .3,0, 1);
+   outColor = vec4(colorValue, colorValue * .1,0, 0.7);
   }
   else if (colorValue < 0.6)
   {
-    outColor = vec4(0, colorValue, 0, 1);
+    outColor = vec4(0, colorValue, 0, 0.4);
   }
   else
   {
-    outColor = vec4(0, 0, colorValue, 1);
+    outColor = vec4(0, 0, colorValue, 0.7);
   }
   
 }
@@ -92,6 +92,8 @@ var vao;
 
 var offsetX = 0;
 var offsetY = 0;
+
+var offsetY_anim = offsetY;
 
 var W = 300;
 var H = 35000;
@@ -190,7 +192,7 @@ function main() {
   // Create a vertex array object (attribute state)
   vao = gl.createVertexArray();
 
-   render();
+  requestAnimationFrame(render);
 
 }
 
@@ -266,7 +268,9 @@ function build_rectangles_host(w, h)
 
 function render_new() {
 
- 
+  animate_y_offset();
+  animate_y_scale();
+
   gl.bindVertexArray(vao);
   gl.enableVertexAttribArray(positionAttributeLocation);
 
@@ -292,6 +296,11 @@ function render_new() {
   gl.clearColor(1, 1, 0, 0);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+  gl.disable(gl.BLEND);
+
+
+  
+  // gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
   // Tell it to use our program (pair of shaders)
   gl.useProgram(program);
 
@@ -309,11 +318,11 @@ function render_new() {
   var
     y = getOffsetY();
 
+ 
+
   gl.uniform2f(offsetLocation, 0, -y);
 
   gl.uniform1f(y_scaleLocation, y_scale);
-
-  // gl.bufferData(gl.ARRAY_BUFFER, cpu_data, gl.STATIC_DRAW);    
 
   // Draw the rectangles.
 
@@ -365,7 +374,7 @@ function resizeXXX(event) {
   //gl.canvas.width = window.innerWidth;
   //gl.canvas.height = window.innerHeight;
 
-  render();
+  requestAnimationFrame(render);
 
 }
 
@@ -398,7 +407,7 @@ function handleMouseUp(event) {
 
   console.log('handleMouseUp delta (' + (x_current - x_down) + ',' + (y_current - y_down) + ')');
 
-  render();
+  requestAnimationFrame(render);
 }
 
 function getOffsetY()
@@ -420,7 +429,7 @@ function handleMouseMove(event) {
 
   if (isDragging)
   {
-    render();
+    requestAnimationFrame(render);
   }
 }
 
@@ -434,11 +443,12 @@ function trace(y_mouse) {
   var
     content_y = (screen_y - offsetY) / y_scale;
 
+  var
+    row = content_y / 12;
+
  
-  console.log('trace at screen y =' + screen_y + ' gives content y = ' + content_y);
-
-
-  
+  console.log('trace at screen y =' + screen_y + ' gives row = ' + row);
+ 
 }
 
 function handleMouseDown(event) {
@@ -465,37 +475,105 @@ function handleMouseDown(event) {
   console.log('handleMouseDown at (' + x_down + ',' + y_down + ')');
 }
 
+
+function animate_y_offset() {
+
+  var diff = getOffsetY() - offsetY_anim;
+  
+  var
+    N = 7;
+
+  diff = (N - 1) * diff / N;
+
+  if (Math.abs(diff) < 0.005) {
+    offsetY_anim = getOffsetY();
+  }
+  else {
+    offsetY_anim = getOffsetY() - diff;
+    requestAnimationFrame(render);
+  }
+
+}
+
+function set_y_scale_and_adjust_offset(y_scale_new, y_mouse) {
+
+  var
+    content_y0 = (y_mouse - offsetY) / y_scale;
+
+  y_scale = y_scale_new;
+  
+  offsetY = y_mouse - content_y0 * y_scale;
+
+  console.log('set_y_scale_and_adjust_offset. scale = ' + y_scale);
+}
+
+var y_scale_optimal = 0;
+var y_scale_optimal_mouse = 0;
+
+function animate_y_end_and_stop() {
+  if (y_scale_optimal == 0) {
+    return;
+  }
+  set_y_scale_and_adjust_offset(y_scale_optimal, y_scale_optimal_mouse);
+  y_scale_optimal = 0;
+
+}
+
+function animate_y_scale()
+{
+  if (y_scale_optimal == 0)
+  {
+    return;
+  }
+
+  var
+    y_diff = y_scale - y_scale_optimal;
+
+  var
+    N = 7;
+
+  y_diff = (N-1) * y_diff / N;
+
+  var
+    y_scale_new = y_diff + y_scale_optimal;
+
+  if (Math.abs(y_diff) < 0.005)
+  {
+    console.log('Animation met threshold');
+    animate_y_end_and_stop();
+  }
+  else
+  {
+    set_y_scale_and_adjust_offset(y_scale_new, y_scale_optimal_mouse);
+    requestAnimationFrame(render);
+  }
+  
+}
+
+
 function handleMouseWheel(event) {
 
   var rect = canvas.getBoundingClientRect();
 
-  var x = event.clientX - rect.left;
-  var y = event.clientY - rect.top;
+  var y_mouse = event.clientY - rect.top;
 
   var d = event.wheelDelta;
+ 
+  var y_scale_new;
 
-  var y_scale0 = y_scale;
-  var offsetY0 = offsetY;
 
-  console.log('handleMouseWheel: delta ' + d + ' at (' + x + ',' + y + ')');
-  
-  var
-    content_y0 = (y - offsetY0) / y_scale0;
+  var y_scale_current = (y_scale_optimal == 0) ? y_scale : y_scale_optimal;
 
   if (d > 0) {
-    y_scale *= 1.1;
+    y_scale_new = y_scale_current * 1.1;
   } else {
-    y_scale /= 1.1;
+    y_scale_new = y_scale_current / 1.1;
   }
 
-  // set offset so that content_y0 = content_y1
+  y_scale_optimal = y_scale_new;
+  y_scale_optimal_mouse = y_mouse;
 
-  offsetY = y - content_y0 * y_scale;
-
-  var
-    content_y1 = (y - offsetY) / y_scale;
-
-  render();
+  requestAnimationFrame(render);
 }
 
 // Returns a random integer from 0 to range - 1.
