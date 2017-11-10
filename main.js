@@ -115,26 +115,59 @@ function GetUniformLocation(string, isWarn)
   return location;
 }
 
+var xmlhttp;
+
+function parseResponse(text) {
+    console.log("Parsing response...");
+    // ...
+}
+
+
+function transferComplete(evt) {
+    console.log("The transfer is complete.");
+    parseResponse(xmlhttp.responseText);
+
+}
+
+function updateProgress(oEvent) {
+    if (oEvent.lengthComputable) {
+        
+        var percentComplete = oEvent.loaded / oEvent.total;
+        console.log("loading... (" + (100.0 * percentComplete).toPrecision(2) + " %)");
+
+    } else {
+        console.log("loading...");
+    }
+}
+
 function LoadData() {
 
-  var xmlhttp = new XMLHttpRequest();
-  var url = "myData.txt";
+    xmlhttp = new XMLHttpRequest();
 
-  console.log("LoadData()"); 
+    xmlhttp.addEventListener("load", transferComplete);
+    xmlhttp.addEventListener("progress", updateProgress);
 
-  xmlhttp.onreadystatechange = function () {
-    if (this.readyState == 4 && this.status == 200) {
-      console.log(this.responseText);
+    var url = "large.txt";   // "myData.txt";
 
-      //var myArr = JSON.parse(this.responseText);
-      //myFunction(myArr);
-    }
-    else {
+    console.log("LoadData()"); 
 
-      console.log("readyState = " + this.readyState + ", status = " + this.status);
+    xmlhttp.onreadystatechange = function () {
 
-    }
-  };
+        console.log("readyState = " + this.readyState + ", status = " + this.status);
+
+        /*
+        if (this.readyState == 4 && this.status == 200) {
+            console.log(this.responseText);
+
+            //var myArr = JSON.parse(this.responseText);
+            //myFunction(myArr);
+        }
+        else {
+           
+        }
+        */
+    };
+
   xmlhttp.open("GET", url, true);
   xmlhttp.send();
 
