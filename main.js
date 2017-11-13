@@ -117,16 +117,91 @@ function GetUniformLocation(string, isWarn)
 
 var xmlhttp;
 
-function parseResponse(text) {
-    console.log("Parsing response...");
+var loading_state = 0;
+
+var json_raw = [];
+
+function parseResponse() {
+
+
+  for (var iChunk = 0; iChunk < 5; iChunk++)
+  {
+
+    var
+      i = json_raw[iChunk];
+
+    console.log("Elements found : " + i.length);
+
+
+    for (var iPerson = 0; iPerson < i.length; iPerson++)
+    {
+      var q = i[iPerson];
+
+      var id = q.id;
+
+      var events = q.E;
+
+      var nEvents = events.length;
+
+      /*
+      for (var iEvent = 0; iEvent < nEvents; iEvent++)
+      {
+        var begin = events[iEvent];
+        var end = begin - 14;
+        // console.log("ID " + id + "E  " + "[" + begin + ", " + end + "]");
+
+        // ...
+      }
+      */
+      var aa_intervals = q.AA;
+      var nAA = aa_intervals.length;
+
+      /*
+      for (var iAA = 0; iAA < nAA; iAA += 2)
+      {
+        var begin = aa_intervals[iAA + 0];
+        var end = aa_intervals[iAA + 1];
+        // console.log("ID " + id + "AA " + "[" + begin + ", " + end + "]");
+
+        // ...
+
+      }
+      */
+
+
+      // ...
+
+    }
+
+
     // ...
+
+  }
+
 }
 
 
 function transferComplete(evt) {
-    console.log("The transfer is complete.");
-    parseResponse(xmlhttp.responseText);
 
+    console.log("The transfer is complete for loading# " + loading_state);
+
+    json_raw[loading_state] = JSON.parse(xmlhttp.response);
+
+    if (loading_state < 4)
+    {
+      console.log("Issuing new load");
+      loading_state++;
+      LoadData();
+    }
+    else
+    {
+      console.log("All loading done. Starting GL");
+
+      parseResponse();
+
+      setupGL();
+      requestAnimationFrame(render);
+    }
 }
 
 function updateProgress(oEvent) {
@@ -147,56 +222,22 @@ function LoadData() {
     xmlhttp.addEventListener("load", transferComplete);
     xmlhttp.addEventListener("progress", updateProgress);
 
-    var url = "large.txt";   // "myData.txt";
+    var data_url = "data" + loading_state + ".json"; 
 
     console.log("LoadData()"); 
 
     xmlhttp.onreadystatechange = function () {
-
         console.log("readyState = " + this.readyState + ", status = " + this.status);
-
-        /*
-        if (this.readyState == 4 && this.status == 200) {
-            console.log(this.responseText);
-
-            //var myArr = JSON.parse(this.responseText);
-            //myFunction(myArr);
-        }
-        else {
-           
-        }
-        */
     };
 
-  xmlhttp.open("GET", url, true);
-  xmlhttp.send();
+    xmlhttp.open("GET", data_url, true);
+    xmlhttp.send();
 
 }
 
 
-function main() {
-
-  LoadData();
-
-
-  console.log("LoadData has been issued");
-  // Get A WebGL context
-  canvas = document.getElementById("c");
-  gl = canvas.getContext("webgl2");
-  if (!gl) {
-    return;
-  }
-
-  logCanvasSize();
-
-
-  window.addEventListener('resize', resizeXXX, false);
-
-  canvas.onmousedown = handleMouseDown;
-  canvas.onmouseup = handleMouseUp;
-  canvas.onmousemove = handleMouseMove;
-
-  canvas.onmousewheel = handleMouseWheel;
+function setupGL()
+{
 
   // Create a buffer
   positionBuffer = gl.createBuffer();
@@ -211,13 +252,13 @@ function main() {
   // look up where the vertex data needs to go.
   positionAttributeLocation = GetUniformLocation("a_position", false);
 
-  
+
   resolutionUniformLocation = GetUniformLocation("u_resolution", true);
 
 
   contentsizeUniformLocation = GetUniformLocation("u_contents_size", true);
 
-  
+
   offsetLocation = GetUniformLocation("pixel_offset", true);
 
   y_scaleLocation = GetUniformLocation("y_scale", true);
@@ -225,7 +266,29 @@ function main() {
   // Create a vertex array object (attribute state)
   vao = gl.createVertexArray();
 
-  requestAnimationFrame(render);
+}
+
+function main() {
+
+  LoadData();
+
+  console.log("LoadData has been issued");
+  // Get A WebGL context
+  canvas = document.getElementById("c");
+  gl = canvas.getContext("webgl2");
+  if (!gl) {
+    return;
+  }
+
+  logCanvasSize();
+
+  window.addEventListener('resize', resizeXXX, false);
+
+  canvas.onmousedown = handleMouseDown;
+  canvas.onmouseup = handleMouseUp;
+  canvas.onmousemove = handleMouseMove;
+
+  canvas.onmousewheel = handleMouseWheel;
 
 }
 
@@ -537,7 +600,7 @@ function set_y_scale_and_adjust_offset(y_scale_new, y_mouse) {
   
   offsetY = y_mouse - content_y0 * y_scale;
 
-  console.log('set_y_scale_and_adjust_offset. scale = ' + y_scale);
+  // console.log('set_y_scale_and_adjust_offset. scale = ' + y_scale);
 }
 
 var y_scale_optimal = 0;
@@ -572,7 +635,7 @@ function animate_y_scale()
 
   if (Math.abs(y_diff) < 0.005)
   {
-    console.log('Animation met threshold');
+    // console.log('Animation met threshold');
     animate_y_end_and_stop();
   }
   else
