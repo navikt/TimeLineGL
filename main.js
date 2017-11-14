@@ -87,8 +87,11 @@ var offsetLocation;
 
 var y_scaleLocation;
 
-var positionBuffer;
+var rectangleBuffer;
 var vao;
+
+var lineBuffer;
+
 
 var offsetX = 0;
 var offsetY = 0;
@@ -98,9 +101,16 @@ var offsetY_anim = offsetY;
 var W = 300;
 var H = 35000;
 
-var nRectangles = 30000;
-
 var y_scale = 1;
+var row_size = 12;
+
+var nRectangleCount = 0;
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     GetUniformLocation
+//
 
 function GetUniformLocation(string, isWarn)
 {
@@ -115,71 +125,165 @@ function GetUniformLocation(string, isWarn)
   return location;
 }
 
+
 var xmlhttp;
-
 var loading_state = 0;
-
 var json_raw = [];
 
-function parseResponse() {
 
 
-  for (var iChunk = 0; iChunk < 5; iChunk++)
-  {
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     getNumberOfRectangles
+//
+
+function getNumberOfRectangles()
+{
+  var
+    nRectangles = 0;
+
+  for (var iChunk = 0; iChunk < 5; iChunk++) {
+
+    var
+      i = json_raw[iChunk];
+
+    for (var iPerson = 0; iPerson < i.length; iPerson++) {
+
+      var q = i[iPerson];
+
+
+      var events = q.E;
+      var nEvents = events.length;
+
+      var aa_intervals = q.AA;
+      var nAA = aa_intervals.length;
+
+
+      nRectangles += nEvents;
+      nRectangles += nAA;
+    }
+  }
+
+  return nRectangles;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     buildGLLines
+//
+
+function buildGLLines(w)
+{
+  var nVertexPerLine = 2;
+
+  var nElementsPerVertex = 3;
+
+  var nElementsPerLine = nVertexPerLine * nElementsPerVertex;
+
+  var nLines = 1;
+
+  var cpu_data = new Float32Array(nLines * nElementsPerLine);
+
+
+  cpu_data[0] = 0;
+  cpu_data[1] = 0;
+  cpu_data[2] = 0.3;
+
+  cpu_data[3] = w;
+  cpu_data[4] = 1000;
+  cpu_data[5] = 0.9;
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, cpu_data, gl.STATIC_DRAW);
+
+  cpu_data = null;
+
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     buildGLFromData
+//
+
+function buildGLFromData(w)
+{
+
+  var
+    nPrimitives = getNumberOfRectangles();
+
+  var nVertexPerRectangle = 6;
+
+  var nElementsPerVertex = 3;
+
+  var nElementsPerRectangle = nVertexPerRectangle * nElementsPerVertex;
+
+  var cpu_data = new Float32Array(nPrimitives * nElementsPerRectangle);
+
+  var
+    iOffset = 0;
+
+  for (var iChunk = 0; iChunk < 5; iChunk++) {
 
     var
       i = json_raw[iChunk];
 
     console.log("Elements found : " + i.length);
 
+    for (var iPerson = 0; iPerson < i.length; iPerson++) {
 
-    for (var iPerson = 0; iPerson < i.length; iPerson++)
-    {
       var q = i[iPerson];
-
       var id = q.id;
-
       var events = q.E;
-
       var nEvents = events.length;
 
-      /*
+      
       for (var iEvent = 0; iEvent < nEvents; iEvent++)
       {
         var begin = events[iEvent];
         var end = begin - 14;
-        // console.log("ID " + id + "E  " + "[" + begin + ", " + end + "]");
+        var color = 0.9;
 
-        // ...
+        build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, w);
+
+        iOffset += nElementsPerRectangle;
+
       }
-      */
+      
       var aa_intervals = q.AA;
       var nAA = aa_intervals.length;
 
-      /*
+      
       for (var iAA = 0; iAA < nAA; iAA += 2)
       {
         var begin = aa_intervals[iAA + 0];
         var end = aa_intervals[iAA + 1];
-        // console.log("ID " + id + "AA " + "[" + begin + ", " + end + "]");
+        var color = 0.3;
 
-        // ...
+        build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, w);
 
+        iOffset += nElementsPerRectangle;
       }
-      */
-
-
-      // ...
 
     }
 
-
-    // ...
-
+    nRectangleCount = nPrimitives;
   }
+
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, rectangleBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, cpu_data, gl.STATIC_DRAW);
+
+  cpu_data = null;
 
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     transferComplete
+//
 
 function transferComplete(evt) {
 
@@ -197,12 +301,16 @@ function transferComplete(evt) {
     {
       console.log("All loading done. Starting GL");
 
-      parseResponse();
-
       setupGL();
       requestAnimationFrame(render);
     }
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     updateProgress
+//
 
 function updateProgress(oEvent) {
     if (oEvent.lengthComputable) {
@@ -214,6 +322,12 @@ function updateProgress(oEvent) {
         console.log("loading...");
     }
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     LoadData
+//
 
 function LoadData() {
 
@@ -236,14 +350,23 @@ function LoadData() {
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     setupGL
+//
+
 function setupGL()
 {
 
   // Create a buffer
-  positionBuffer = gl.createBuffer();
+  rectangleBuffer = gl.createBuffer();
+
+  lineBuffer = gl.createBuffer();
 
 
-  build_rectangles_host(W, H);
+  buildGLFromData(W);
+
+  buildGLLines(W);
 
   // Use our boilerplate utils to compile the shaders and link into a program
   program = webglUtils.createProgramFromSources(gl,
@@ -267,6 +390,12 @@ function setupGL()
   vao = gl.createVertexArray();
 
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     main
+//
 
 function main() {
 
@@ -293,22 +422,13 @@ function main() {
 }
 
 
-function build_single_rectangle_host(f, iOffset, w, h)
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     write_rectangle
+//
+
+function write_rectangle(f, iOffset, x1, y1, x2, y2, color)
 {
-  var bin_size = 12;
-
-  var x1 = randomInt(w);
-  var x2 = x1 + randomInt(w* .1);
-  var y1 = randomInt(h);
-
-
-  y1 = Math.round(y1 / bin_size) * bin_size;
-
-  var y2 = y1 + 7;
-
-  var
-    color = Math.random();
-
   f[iOffset + 0] = x1;
   f[iOffset + 1] = y1;
   f[iOffset + 2] = color;
@@ -332,35 +452,38 @@ function build_single_rectangle_host(f, iOffset, w, h)
   f[iOffset + 15] = x2;
   f[iOffset + 16] = y2;
   f[iOffset + 17] = color;
-
 }
 
 
-function build_rectangles_host(w, h)
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     build_interval_rectangle
+//
+
+function build_interval_rectangle(f, iOffset, id, begin, end, color, w)
 {
+  var start_time = (1995 - 1970) * 365;
+  var end_time   = (2018 - 1970) * 365;
 
-  var nVertexPerRectangle = 6;
+  var a = w / (end_time - start_time);
 
-  var nElementsPerVertex = 3;
+  var x1 = a * (begin - start_time);
+  var x2 = a * (end - start_time);
 
-  var nElementsPerRectangle = nVertexPerRectangle * nElementsPerVertex;
-
-  var cpu_data = new Float32Array(nRectangles * nElementsPerRectangle);
-
-  for (var iRectangle = 0; iRectangle < nRectangles; iRectangle++)
-  {
-    var
-      iOffset = iRectangle * nElementsPerRectangle;
-
-    build_single_rectangle_host(cpu_data, iOffset, w, h);
-  }
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, cpu_data, gl.STATIC_DRAW);
-
-  cpu_data = null;
   
+  var thickness = 7;
+
+  var y1 = id * 12;
+  var y2 = y1 + thickness;
+
+  write_rectangle(f, iOffset, x1, y1, x2, y2, color);
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     render_new
+//
 
 function render_new() {
 
@@ -370,9 +493,10 @@ function render_new() {
   gl.bindVertexArray(vao);
   gl.enableVertexAttribArray(positionAttributeLocation);
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-  // gl.bufferData(gl.ARRAY_BUFFER, cpu_data, gl.STATIC_DRAW);
-  // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
+  gl.bindBuffer(gl.ARRAY_BUFFER, rectangleBuffer);
+
+
+  // Tell the attribute how to get data out of rectangleBuffer (ARRAY_BUFFER)
   var size = 3;          // 3 components per iteration
   var type = gl.FLOAT;   // the data is 32bit floats
   var normalize = false; // don't normalize the data
@@ -383,21 +507,17 @@ function render_new() {
   gl.vertexAttribPointer(
     positionAttributeLocation, size, type, normalize, stride, offset);
 
-  // webglUtils.resizeCanvasToDisplaySize(gl.canvas);
-
   // Tell WebGL how to convert from clip space to pixels
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
   // Clear the canvas
   gl.clearColor(1, 1, 0, 0);
+
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   gl.disable(gl.BLEND);
 
-
   
-  // gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-  // Tell it to use our program (pair of shaders)
   gl.useProgram(program);
 
   // Bind the attribute/buffer set we want.
@@ -423,7 +543,11 @@ function render_new() {
   // Draw the rectangles.
 
   var offset = 0;
-  var count = nRectangles * 6;
+
+  var count = 6 * 1000; //nRectangleCount * 6;
+
+  
+
   gl.drawArrays(gl.TRIANGLES, offset, count);
 
 
@@ -458,9 +582,21 @@ function render_new() {
   }
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     render
+//
+
 function render() {
   render_new();
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     resizeXXX
+//
 
 function resizeXXX(event) {
   
@@ -471,8 +607,13 @@ function resizeXXX(event) {
   //gl.canvas.height = window.innerHeight;
 
   requestAnimationFrame(render);
-
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     logCanvasSize
+//
 
 function logCanvasSize()
 {
@@ -490,6 +631,12 @@ var y_down;
 var x_current;
 var y_current;
 
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     handleMouseUp
+//
+
 function handleMouseUp(event) {
 
   if (event.button != 0) {
@@ -506,6 +653,12 @@ function handleMouseUp(event) {
   requestAnimationFrame(render);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     getOffsetY
+//
+
 function getOffsetY()
 {
   if (isDragging) {
@@ -515,6 +668,12 @@ function getOffsetY()
     return  offsetY/ y_scale;
   }
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     handleMouseMove
+//
 
 function handleMouseMove(event) {
 
@@ -529,6 +688,12 @@ function handleMouseMove(event) {
   }
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     trace
+//
+
 function trace(y_mouse) {
 
   console.log('trace at y=' + y_mouse);
@@ -540,12 +705,17 @@ function trace(y_mouse) {
     content_y = (screen_y - offsetY) / y_scale;
 
   var
-    row = content_y / 12;
+    row = content_y / row_size;
 
  
   console.log('trace at screen y =' + screen_y + ' gives row = ' + row);
- 
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     handleMouseDown
+//
 
 function handleMouseDown(event) {
 
@@ -572,6 +742,11 @@ function handleMouseDown(event) {
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     animate_y_offset
+//
+
 function animate_y_offset() {
 
   var diff = getOffsetY() - offsetY_anim;
@@ -588,8 +763,13 @@ function animate_y_offset() {
     offsetY_anim = getOffsetY() - diff;
     requestAnimationFrame(render);
   }
-
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     set_y_scale_and_adjust_offset
+//
 
 function set_y_scale_and_adjust_offset(y_scale_new, y_mouse) {
 
@@ -606,7 +786,14 @@ function set_y_scale_and_adjust_offset(y_scale_new, y_mouse) {
 var y_scale_optimal = 0;
 var y_scale_optimal_mouse = 0;
 
-function animate_y_end_and_stop() {
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     animate_y_end_and_stop
+//
+
+function animate_y_end_and_stop()
+{
   if (y_scale_optimal == 0) {
     return;
   }
@@ -614,6 +801,12 @@ function animate_y_end_and_stop() {
   y_scale_optimal = 0;
 
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     animate_y_scale
+//
 
 function animate_y_scale()
 {
@@ -643,9 +836,13 @@ function animate_y_scale()
     set_y_scale_and_adjust_offset(y_scale_new, y_scale_optimal_mouse);
     requestAnimationFrame(render);
   }
-  
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     handleMouseWheel
+//
 
 function handleMouseWheel(event) {
 
@@ -672,19 +869,18 @@ function handleMouseWheel(event) {
   requestAnimationFrame(render);
 }
 
-// Returns a random integer from 0 to range - 1.
-function randomInt(range) {
-  return Math.floor(Math.random() * range);
-}
-
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     setRectangle
+//
 // Fill the buffer with the values that define a rectangle.
+
 function setRectangle(gl, x, y, width, height, c) {
+
   var x1 = x;
   var x2 = x + width;
   var y1 = y;
   var y2 = y + height;
-
-  
 
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
     x1, y1, c,
