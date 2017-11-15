@@ -99,7 +99,6 @@ var offsetY = 0;
 var offsetY_anim = offsetY;
 
 var W = 300;
-var H = 35000;
 
 var y_scale = 1;
 var row_size = 12;
@@ -479,6 +478,21 @@ function build_interval_rectangle(f, iOffset, id, begin, end, color, w)
   write_rectangle(f, iOffset, x1, y1, x2, y2, color);
 }
 
+function resize(canvas) {
+  // Lookup the size the browser is displaying the canvas.
+  var displayWidth = canvas.clientWidth;
+  var displayHeight = canvas.clientHeight;
+
+  // Check if the canvas is not the same size.
+  if (canvas.width !== displayWidth ||
+    canvas.height !== displayHeight) {
+
+    // Make the canvas the same size
+    canvas.width = displayWidth;
+    canvas.height = displayHeight;
+  }
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -486,6 +500,8 @@ function build_interval_rectangle(f, iOffset, id, begin, end, color, w)
 //
 
 function render_new() {
+
+  resize(gl.canvas);
 
   animate_y_offset();
   animate_y_scale();
@@ -526,8 +542,7 @@ function render_new() {
   gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
   var
-    x_factor = gl.canvas.width / W,
-    y_factor = gl.canvas.height / H;
+    x_factor = gl.canvas.width / W;
 
   gl.uniform2f(contentsizeUniformLocation, x_factor, 1);
 
@@ -544,7 +559,7 @@ function render_new() {
 
   var offset = 0;
 
-  var count = 6 * 1000; //nRectangleCount * 6;
+  var count = 6 * 10000; //nRectangleCount * 6;
 
   
 
@@ -599,13 +614,6 @@ function render() {
 //
 
 function resizeXXX(event) {
-  
-
-  console.log('resizeXXX');
-
-  //gl.canvas.width = window.innerWidth;
-  //gl.canvas.height = window.innerHeight;
-
   requestAnimationFrame(render);
 }
 

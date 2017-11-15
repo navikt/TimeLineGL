@@ -4,21 +4,24 @@
     
     <meta charset="utf-8">
     <style>
-        body, html {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
+        /* remove the border */
+        body {
+            border: 0;
             background-color: white;
         }
-
+        /* make the canvas the size of the viewport */
+        canvas {
+            margin: 0 auto;
+            width: 98vw;
+            height: 95vh;
+            display: block;
+        }
     </style>
     
 </head>
 
 <body>
-    <canvas width="1520" height="860" id="c"></canvas>
+    <canvas id="c"></canvas>
 </body>
 </html>
 
