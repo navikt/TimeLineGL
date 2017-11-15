@@ -102,8 +102,11 @@ var W = 300;
 
 var y_scale = 1;
 var row_size = 12;
+var rectangle_thickness = 7;
 
 var nRectangleCount = 0;
+
+var nMaxChunk = 5;
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -141,7 +144,7 @@ function getNumberOfRectangles()
   var
     nRectangles = 0;
 
-  for (var iChunk = 0; iChunk < 5; iChunk++) {
+  for (var iChunk = 0; iChunk < nMaxChunk; iChunk++) {
 
     var
       i = json_raw[iChunk];
@@ -168,6 +171,91 @@ function getNumberOfRectangles()
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
+//     addLine
+//
+
+function addLine(f, i, x0, y0, x1, y1, c) {
+
+  f[i + 0] = x0;
+  f[i + 1] = y0;
+  f[i + 2] = c;
+
+  f[i + 3] = x1;
+  f[i + 4] = y1;
+  f[i + 5] = c;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     getLineCount
+//
+
+function getLineCount()
+{
+
+  var
+    nLines = 0;
+
+  
+  // Year lines
+  var
+    nYearLineCount = 0;
+
+  for (var iYear = 1996; iYear < 2018; iYear++) {
+    nYearLineCount++;
+  }
+
+  nLines += nYearLineCount;
+  
+  // Test lines
+  nLines += 2;
+
+  return nLines;
+
+}
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     buildLines
+//
+
+function buildLines(f, w)
+{
+
+  var
+    i = 0;
+
+  // Year lines:
+
+  for (var iYear = 1996; iYear < 2018; iYear++) {
+
+
+    var time = (iYear - 1970) * 365.242199;
+
+    var x = get_x_from_time(w, time);
+   
+    addLine(f, i, x, 0, x, 2000, 0.9);
+    i += 6;
+
+  }
+
+
+
+  // Test lines:
+
+  addLine(f, i, w / 2, 0, w / 2, 2000, 0.9);
+  i += 6;
+
+  addLine(f, i, 0, 500, w, 500, 0.3);
+  i += 6;
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
 //     buildGLLines
 //
 
@@ -179,27 +267,36 @@ function buildGLLines(w)
 
   var nElementsPerLine = nVertexPerLine * nElementsPerVertex;
 
-  var nLines = 1;
 
-  var cpu_data = new Float32Array(nLines * nElementsPerLine);
+  var cpu_data = new Float32Array(getLineCount() * nElementsPerLine);
 
-
-  cpu_data[0] = 0;
-  cpu_data[1] = 0;
-  cpu_data[2] = 0.3;
-
-  cpu_data[3] = w;
-  cpu_data[4] = 1000;
-  cpu_data[5] = 0.9;
+  buildLines(cpu_data, w);
 
   gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, cpu_data, gl.STATIC_DRAW);
 
   cpu_data = null;
-
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     getNumberOfPersons
+//
 
+function getNumberOfPersons() {
+
+  var nPersons = 0;
+
+  for (var iChunk = 0; iChunk < nMaxChunk; iChunk++) {
+
+    var
+      i = json_raw[iChunk];
+
+    nPersons += i.length;
+  }
+
+  return nPersons;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -223,7 +320,7 @@ function buildGLFromData(w)
   var
     iOffset = 0;
 
-  for (var iChunk = 0; iChunk < 5; iChunk++) {
+  for (var iChunk = 0; iChunk < nMaxChunk; iChunk++) {
 
     var
       i = json_raw[iChunk];
@@ -453,6 +550,20 @@ function write_rectangle(f, iOffset, x1, y1, x2, y2, color)
   f[iOffset + 17] = color;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     get_x_from_time
+//
+
+function get_x_from_time(w, time)
+{
+  var start_time = (1995 - 1970) * 365.242199;
+  var end_time = (2018 - 1970) * 365.242199;
+
+  var a = w / (end_time - start_time);
+
+  return a * (time - start_time);
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -461,19 +572,13 @@ function write_rectangle(f, iOffset, x1, y1, x2, y2, color)
 
 function build_interval_rectangle(f, iOffset, id, begin, end, color, w)
 {
-  var start_time = (1995 - 1970) * 365;
-  var end_time   = (2018 - 1970) * 365;
-
-  var a = w / (end_time - start_time);
-
-  var x1 = a * (begin - start_time);
-  var x2 = a * (end - start_time);
-
+  var x1 = get_x_from_time(w, begin);
+  var x2 = get_x_from_time(w, end);
   
-  var thickness = 7;
+  
 
-  var y1 = id * 12;
-  var y2 = y1 + thickness;
+  var y1 = id * row_size;
+  var y2 = y1 + rectangle_thickness;
 
   write_rectangle(f, iOffset, x1, y1, x2, y2, color);
 }
@@ -559,40 +664,35 @@ function render_new() {
 
   var offset = 0;
 
-  var count = 6 * 10000; //nRectangleCount * 6;
+  var count = 6000 *6; // nRectangleCount * 6;
 
   
-
   gl.drawArrays(gl.TRIANGLES, offset, count);
 
 
-  // Draw content border frame
-  var is_draw_frame = false;
+  
+  var is_draw_lines = true;
 
-  if (is_draw_frame) {
+  if (is_draw_lines) {
 
-    var x0 = 0;
-    var y0 = 0;
-    var x1 = W;
-    var y1 = H;
+    // gl.bindVertexArray(vao);
+    // gl.enableVertexAttribArray(positionAttributeLocation);
 
-    var thickness = 7;
+    gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
 
-    setRectangle(gl, x0, y0, x1 - x0, thickness, 0.3);
 
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    // Tell the attribute how to get data out of rectangleBuffer (ARRAY_BUFFER)
+    var size = 3;          // 3 components per iteration
+    var type = gl.FLOAT;   // the data is 32bit floats
+    var normalize = false; // don't normalize the data
+    var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+    var offset = 0;        // start at the beginning of the buffer
 
-    setRectangle(gl, x0, y1 - thickness, x1 - x0, thickness, 0.3);
 
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.vertexAttribPointer(
+      positionAttributeLocation, size, type, normalize, stride, offset);
 
-    setRectangle(gl, x0, y0, thickness, y1 - y0, 0.3);
-
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-    setRectangle(gl, x1 - thickness, y0, thickness, y1 - y0, 0.3);
-
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.drawArrays(gl.LINES, 0, 2 * getLineCount());
 
   }
 }
