@@ -1,8 +1,62 @@
 
 "use strict";
 
+var vertexShaderSourceTEX = `#version 300 es
 
-var vertexShaderSource = `#version 300 es
+// an attribute is an input (in) to a vertex shader.
+// It will receive data from a buffer
+in vec3 a_positionTEX;
+
+in vec2 a_texcoordTEX;
+
+out float colorValueTEX;
+
+// a varying to pass the texture coordinates to the fragment shader
+out vec2 v_texcoordTEX;
+
+
+// Resolution of canvas
+uniform vec2 u_resolutionTEX;
+
+// Extent of content, range 0:inclusive -> value: exclusive.
+uniform vec2 u_contents_sizeTEX;
+
+uniform vec2 pixel_offsetTEX;
+
+uniform float y_scaleTEX;
+
+// all shaders have a main function
+void main() {
+ 
+  vec2 offsetpixel = a_positionTEX.xy - pixel_offsetTEX;
+
+  offsetpixel.y *= y_scaleTEX;
+
+  // convert the position from pixels to 0.0 to 1.0
+  vec2 zeroToOne = offsetpixel / u_resolutionTEX;
+
+
+  zeroToOne = zeroToOne * u_contents_sizeTEX;
+
+  // vec2 zeroToOne = u_contents_size * offsetpixel;
+
+  // convert from 0->1 to 0->2
+  vec2 zeroToTwo = zeroToOne * 2.0;
+
+  // convert from 0->2 to -1->+1 (clipspace)
+  vec2 clipSpace = zeroToTwo - 1.0;
+
+  gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+
+  colorValueTEX = a_positionTEX.z;
+
+  // Pass the texcoord to the fragment shader.
+  v_texcoordTEX = a_texcoordTEX;
+}
+`;
+
+
+var vertexShaderSourceBASIC = `#version 300 es
 
 // an attribute is an input (in) to a vertex shader.
 // It will receive data from a buffer
@@ -48,7 +102,7 @@ void main() {
 }
 `;
 
-var fragmentShaderSource = `#version 300 es
+var fragmentShaderSourceBASIC = `#version 300 es
 
 precision mediump float;
 
@@ -75,22 +129,60 @@ void main() {
 }
 `;
 
+var fragmentShaderSourceTEX = `#version 300 es
+
+precision mediump float;
+
+// Passed in from the vertex shader.
+in vec2 v_texcoordTEX;
+
+// The texture.
+uniform sampler2D u_textureTEX;
+
+
+
+// we need to declare an output for the fragment shader
+out vec4 outColor;
+
+in float colorValueTEX;
+
+void main() {
+  // outColor = texture(u_textureTEX, v_texcoordTEX);
+
+ outColor = vec4(0, 0, colorValueTEX, 0.7);
+
+ 
+  
+}
+`;
+
+
 var gl;
 var canvas;
 
 var program;
 var positionAttributeLocation;
 var resolutionUniformLocation;
-
 var contentsizeUniformLocation;
 var offsetLocation;
-
 var y_scaleLocation;
 
 var rectangleBuffer;
 var vao;
-
 var lineBuffer;
+
+var programTex;
+var rectangleBufferTexTex;
+var rectangleBufferPosTex;
+var vaoTex;
+var positionAttributeLocationTex;
+var texAttributeLocationTex;
+
+var resolutionUniformLocationTex;
+var contentsizeUniformLocationTex;
+var offsetLocationTex;
+var y_scaleLocationTex;
+
 
 
 var offsetX = 0;
@@ -114,10 +206,10 @@ var nMaxChunk = 5;
 //     GetUniformLocation
 //
 
-function GetUniformLocation(string, isWarn)
+function GetUniformLocation(p, string, isWarn)
 {
   var
-    location = gl.getUniformLocation(program, string);
+    location = gl.getUniformLocation(p, string);
 
   if (isWarn && location == null)
   {
@@ -216,7 +308,6 @@ function getLineCount()
 
 
 
-
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 //     buildLines
@@ -296,6 +387,92 @@ function getNumberOfPersons() {
   }
 
   return nPersons;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     buildGLTex
+//
+
+function buildGLTex()
+{
+
+  
+  var f_tex = new Float32Array(1 * 6 * 2);
+
+  var u1 = 0;
+  var v1 = 0;
+
+  var u2 = 1;
+  var v2 = 1;
+
+  var iOffset = 0;
+
+  f_tex[iOffset + 0] = u1;
+  f_tex[iOffset + 1] = v1;
+  
+  f_tex[iOffset + 2] = u2;
+  f_tex[iOffset + 3] = v1;
+
+  f_tex[iOffset + 4] = u1;
+  f_tex[iOffset + 5] = v2;
+
+  f_tex[iOffset + 6] = u1;
+  f_tex[iOffset + 7] = v2;
+
+  f_tex[iOffset + 8] = u2;
+  f_tex[iOffset + 9] = v1;
+
+  f_tex[iOffset + 10] = u2;
+  f_tex[iOffset + 11] = v2;
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, rectangleBufferTexTex);
+  gl.bufferData(gl.ARRAY_BUFFER, f_tex, gl.STATIC_DRAW);
+
+  f_tex = null;
+
+  var f_pos = new Float32Array(1 * 6 * 3);
+
+  var x1 = 50;
+  var y1 = 70;
+
+  var x2 = 95;
+  var y2 = 160;
+
+  var c = 0.4;
+  
+  var iOffset = 0;
+
+
+  f_pos[iOffset + 0] = x1;
+  f_pos[iOffset + 1] = y1;
+  f_pos[iOffset + 2] = c;
+
+  f_pos[iOffset + 3] = x2;
+  f_pos[iOffset + 4] = y1;
+  f_pos[iOffset + 5] = c;
+
+  f_pos[iOffset + 6] = x1;
+  f_pos[iOffset + 7] = y2;
+  f_pos[iOffset + 8] = c;
+
+  f_pos[iOffset + 9] = x1;
+  f_pos[iOffset + 10] = y2;
+  f_pos[iOffset + 11] = c;
+
+  f_pos[iOffset + 12] = x2;
+  f_pos[iOffset + 13] = y1;
+  f_pos[iOffset + 14] = c;
+
+  f_pos[iOffset + 15] = x2;
+  f_pos[iOffset + 16] = y2;
+  f_pos[iOffset + 17] = c;
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, rectangleBufferPosTex);
+  gl.bufferData(gl.ARRAY_BUFFER, f_pos, gl.STATIC_DRAW);
+
+
+  f_pos = null;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -397,7 +574,12 @@ function transferComplete(evt) {
     {
       console.log("All loading done. Starting GL");
 
+      setupGLTex();
       setupGL();
+
+     
+
+
       requestAnimationFrame(render);
     }
 }
@@ -445,6 +627,55 @@ function LoadData() {
 
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     setupGLTex
+//
+
+function setupGLTex() {
+
+  // Create a buffer
+  rectangleBufferTexTex = gl.createBuffer();
+  rectangleBufferPosTex = gl.createBuffer();
+
+  buildGLTex();
+
+  // Use our boilerplate utils to compile the shaders and link into a program
+  programTex = webglUtils.createProgramFromSources(gl,
+    [vertexShaderSourceTEX, fragmentShaderSourceTEX]);
+
+  gl.useProgram(programTex);
+
+
+  // look up where the vertex data needs to go.
+  positionAttributeLocationTex = GetUniformLocation(programTex, "a_positionTEX", false);
+
+  texAttributeLocationTex = GetUniformLocation(programTex, "a_texcoordTEX", false);
+
+  resolutionUniformLocationTex = GetUniformLocation(programTex, "u_resolutionTEX", true);
+  contentsizeUniformLocationTex = GetUniformLocation(programTex, "u_contents_sizeTEX", true);
+  offsetLocationTex = GetUniformLocation(programTex, "pixel_offsetTEX", true);
+  y_scaleLocationTex = GetUniformLocation(programTex, "y_scaleTEX", true);
+  
+  // Create a vertex array object (attribute state)
+  vaoTex = gl.createVertexArray();
+
+
+  // Create a texture.
+  var texture = gl.createTexture();
+
+  // use texture unit 0
+  gl.activeTexture(gl.TEXTURE0 + 0);
+
+  // bind to the TEXTURE_2D bind point of texture unit 0
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+
+  // Fill the texture with a 1x1 blue pixel.
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+    new Uint8Array([0, 0, 255, 255]));
+
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -466,26 +697,21 @@ function setupGL()
 
   // Use our boilerplate utils to compile the shaders and link into a program
   program = webglUtils.createProgramFromSources(gl,
-    [vertexShaderSource, fragmentShaderSource]);
+    [vertexShaderSourceBASIC, fragmentShaderSourceBASIC]);
 
   // look up where the vertex data needs to go.
-  positionAttributeLocation = GetUniformLocation("a_position", false);
+  positionAttributeLocation = GetUniformLocation(program, "a_position", false);
 
-
-  resolutionUniformLocation = GetUniformLocation("u_resolution", true);
-
-
-  contentsizeUniformLocation = GetUniformLocation("u_contents_size", true);
-
-
-  offsetLocation = GetUniformLocation("pixel_offset", true);
-
-  y_scaleLocation = GetUniformLocation("y_scale", true);
+  resolutionUniformLocation = GetUniformLocation(program, "u_resolution", true);
+  contentsizeUniformLocation = GetUniformLocation(program, "u_contents_size", true);
+  offsetLocation = GetUniformLocation(program, "pixel_offset", true);
+  y_scaleLocation = GetUniformLocation(program, "y_scale", true);
 
   // Create a vertex array object (attribute state)
   vao = gl.createVertexArray();
 
 }
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -504,6 +730,7 @@ function main() {
   if (!gl) {
     return;
   }
+  
 
   logCanvasSize();
 
@@ -611,6 +838,8 @@ function render_new() {
   animate_y_offset();
   animate_y_scale();
 
+  
+
   gl.bindVertexArray(vao);
   gl.enableVertexAttribArray(positionAttributeLocation);
 
@@ -675,8 +904,7 @@ function render_new() {
 
   if (is_draw_lines) {
 
-    // gl.bindVertexArray(vao);
-    // gl.enableVertexAttribArray(positionAttributeLocation);
+
 
     gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
 
@@ -695,6 +923,72 @@ function render_new() {
     gl.drawArrays(gl.LINES, 0, 2 * getLineCount());
 
   }
+
+
+  // Tex render begin
+
+  gl.bindVertexArray(vaoTex);
+  gl.enableVertexAttribArray(positionAttributeLocationTex);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, rectangleBufferPosTex);
+
+  
+  
+  
+
+
+  // Tell the attribute how to get data out of rectangleBuffer (ARRAY_BUFFER)
+  var size = 3;          // 3 components per iteration
+  var type = gl.FLOAT;   // the data is 32bit floats
+  var normalize = false; // don't normalize the data
+  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+  var offset = 0;        // start at the beginning of the buffer
+
+
+  gl.vertexAttribPointer(
+    positionAttributeLocationTex, size, type, normalize, stride, offset);
+
+
+  // Turn on the attribute
+  gl.enableVertexAttribArray(texAttributeLocationTex);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, rectangleBufferTexTex);
+
+  // Tell the attribute how to get data out of colorBuffer (ARRAY_BUFFER)
+  var size = 2;          // 2 components per iteration
+  var type = gl.FLOAT;   // the data is 32bit floating point values
+  var normalize = true;  // convert from 0-255 to 0.0-1.0
+  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next color
+  var offset = 0;        // start at the beginning of the buffer
+  gl.vertexAttribPointer(
+    texAttributeLocationTex, size, type, normalize, stride, offset);
+
+  gl.activeTexture(gl.TEXTURE0 + 0);
+
+
+  gl.bindVertexArray(vaoTex);
+  gl.enableVertexAttribArray(positionAttributeLocationTex);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, rectangleBufferPosTex);
+
+  gl.useProgram(programTex);
+
+  gl.uniform2f(resolutionUniformLocationTex, gl.canvas.width, gl.canvas.height);
+  gl.uniform2f(contentsizeUniformLocationTex, x_factor, 1);
+  gl.uniform2f(offsetLocationTex, 0, -y);
+  gl.uniform1f(y_scaleLocationTex, y_scale);
+
+
+
+
+
+
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+
+  // Tex render end
+
+
 }
 
 
