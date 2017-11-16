@@ -147,12 +147,7 @@ out vec4 outColor;
 in float colorValueTEX;
 
 void main() {
-  // outColor = texture(u_textureTEX, v_texcoordTEX);
-
- outColor = vec4(0, 0, colorValueTEX, 0.7);
-
- 
-  
+  outColor = texture(u_textureTEX, v_texcoordTEX);
 }
 `;
 
@@ -182,6 +177,7 @@ var resolutionUniformLocationTex;
 var contentsizeUniformLocationTex;
 var offsetLocationTex;
 var y_scaleLocationTex;
+var usamplerTex;
 
 
 
@@ -436,8 +432,8 @@ function buildGLTex()
   var x1 = 50;
   var y1 = 70;
 
-  var x2 = 95;
-  var y2 = 160;
+  var x2 = 200;
+  var y2 = 260;
 
   var c = 0.4;
   
@@ -574,7 +570,7 @@ function transferComplete(evt) {
     {
       console.log("All loading done. Starting GL");
 
-      setupGLTex();
+      // setupGLTex();
       setupGL();
 
      
@@ -656,23 +652,44 @@ function setupGLTex() {
   contentsizeUniformLocationTex = GetUniformLocation(programTex, "u_contents_sizeTEX", true);
   offsetLocationTex = GetUniformLocation(programTex, "pixel_offsetTEX", true);
   y_scaleLocationTex = GetUniformLocation(programTex, "y_scaleTEX", true);
+
+  usamplerTex = GetUniformLocation(programTex, "u_textureTEX", true);
   
   // Create a vertex array object (attribute state)
   vaoTex = gl.createVertexArray();
 
 
-  // Create a texture.
+   // Create a texture.
   var texture = gl.createTexture();
+  
 
-  // use texture unit 0
-  gl.activeTexture(gl.TEXTURE0 + 0);
+  // fill texture with 4x4 pixels
+  const level = 0;
+  const internalFormat = gl.R8;
+  const width = 4;
+  const height = 4;
+  const border = 0;
+  const format = gl.RED;
+  const type = gl.UNSIGNED_BYTE;
+  const data = new Uint8Array([
+    128, 64, 128,   0, 192, 0, 12, 142,
+      0, 34, 200, 100, 255, 6, 88, 187 
+  ]);
 
   // bind to the TEXTURE_2D bind point of texture unit 0
   gl.bindTexture(gl.TEXTURE_2D, texture);
 
-  // Fill the texture with a 1x1 blue pixel.
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
-    new Uint8Array([0, 0, 255, 255]));
+  gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, width, height, border,
+    format, type, data);
+
+  // set the filtering so we don't need mips and it's not filtered
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+
+  gl.activeTexture(gl.TEXTURE0 + 0);
+ 
 
 }
 
@@ -734,7 +751,7 @@ function main() {
 
   logCanvasSize();
 
-  window.addEventListener('resize', resizeXXX, false);
+  window.addEventListener('resize', resizeEventHandler, false);
 
   canvas.onmousedown = handleMouseDown;
   canvas.onmouseup = handleMouseUp;
@@ -826,25 +843,14 @@ function resize(canvas) {
 }
 
 
-///////////////////////////////////////////////////////////////////////////////////////
-//
-//     render_new
-//
+function render_rectangles() {
 
-function render_new() {
-
-  resize(gl.canvas);
-
-  animate_y_offset();
-  animate_y_scale();
-
-  
+  // Bind the attribute/buffer set we want.
 
   gl.bindVertexArray(vao);
   gl.enableVertexAttribArray(positionAttributeLocation);
 
   gl.bindBuffer(gl.ARRAY_BUFFER, rectangleBuffer);
-
 
   // Tell the attribute how to get data out of rectangleBuffer (ARRAY_BUFFER)
   var size = 3;          // 3 components per iteration
@@ -857,84 +863,53 @@ function render_new() {
   gl.vertexAttribPointer(
     positionAttributeLocation, size, type, normalize, stride, offset);
 
-  // Tell WebGL how to convert from clip space to pixels
-  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-
-  // Clear the canvas
-  gl.clearColor(1, 1, 0, 0);
-
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-  gl.disable(gl.BLEND);
-
-  
   gl.useProgram(program);
 
-  // Bind the attribute/buffer set we want.
-  gl.bindVertexArray(vao);
-
-  gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
   var
     x_factor = gl.canvas.width / W;
 
-  gl.uniform2f(contentsizeUniformLocation, x_factor, 1);
-
   var
     y = getOffsetY();
 
- 
-
+  gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+  gl.uniform2f(contentsizeUniformLocation, x_factor, 1);
   gl.uniform2f(offsetLocation, 0, -y);
-
   gl.uniform1f(y_scaleLocation, y_scale);
-
-  // Draw the rectangles.
 
   var offset = 0;
 
-  var count = 6000 *6; // nRectangleCount * 6;
+  var count = 6000 * 6; // nRectangleCount * 6;
 
-  
   gl.drawArrays(gl.TRIANGLES, offset, count);
+}
+
+function render_lines() {
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
+
+  // Tell the attribute how to get data out of rectangleBuffer (ARRAY_BUFFER)
+  var size = 3;          // 3 components per iteration
+  var type = gl.FLOAT;   // the data is 32bit floats
+  var normalize = false; // don't normalize the data
+  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+  var offset = 0;        // start at the beginning of the buffer
+
+  gl.vertexAttribPointer(
+    positionAttributeLocation, size, type, normalize, stride, offset);
+
+  gl.drawArrays(gl.LINES, 0, 2 * getLineCount());
+
+}
 
 
-  
-  var is_draw_lines = true;
-
-  if (is_draw_lines) {
-
-
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
-
-
-    // Tell the attribute how to get data out of rectangleBuffer (ARRAY_BUFFER)
-    var size = 3;          // 3 components per iteration
-    var type = gl.FLOAT;   // the data is 32bit floats
-    var normalize = false; // don't normalize the data
-    var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-    var offset = 0;        // start at the beginning of the buffer
-
-
-    gl.vertexAttribPointer(
-      positionAttributeLocation, size, type, normalize, stride, offset);
-
-    gl.drawArrays(gl.LINES, 0, 2 * getLineCount());
-
-  }
-
-
-  // Tex render begin
+function render_texture() {
 
   gl.bindVertexArray(vaoTex);
-  gl.enableVertexAttribArray(positionAttributeLocationTex);
+
+ 
 
   gl.bindBuffer(gl.ARRAY_BUFFER, rectangleBufferPosTex);
-
-  
-  
-  
 
 
   // Tell the attribute how to get data out of rectangleBuffer (ARRAY_BUFFER)
@@ -948,9 +923,10 @@ function render_new() {
   gl.vertexAttribPointer(
     positionAttributeLocationTex, size, type, normalize, stride, offset);
 
+  gl.enableVertexAttribArray(positionAttributeLocationTex);
 
   // Turn on the attribute
-  gl.enableVertexAttribArray(texAttributeLocationTex);
+ 
 
   gl.bindBuffer(gl.ARRAY_BUFFER, rectangleBufferTexTex);
 
@@ -960,35 +936,34 @@ function render_new() {
   var normalize = true;  // convert from 0-255 to 0.0-1.0
   var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next color
   var offset = 0;        // start at the beginning of the buffer
+
   gl.vertexAttribPointer(
     texAttributeLocationTex, size, type, normalize, stride, offset);
+
+  gl.enableVertexAttribArray(texAttributeLocationTex);
 
   gl.activeTexture(gl.TEXTURE0 + 0);
 
 
-  gl.bindVertexArray(vaoTex);
-  gl.enableVertexAttribArray(positionAttributeLocationTex);
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, rectangleBufferPosTex);
+ 
 
   gl.useProgram(programTex);
+
+  var
+    x_factor = gl.canvas.width / W;
+
+  var
+    y = getOffsetY();
 
   gl.uniform2f(resolutionUniformLocationTex, gl.canvas.width, gl.canvas.height);
   gl.uniform2f(contentsizeUniformLocationTex, x_factor, 1);
   gl.uniform2f(offsetLocationTex, 0, -y);
   gl.uniform1f(y_scaleLocationTex, y_scale);
 
-
-
-
-
+  gl.uniform1i(usamplerTex, 0);
 
   gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-
-  // Tex render end
-
-
 }
 
 
@@ -998,16 +973,36 @@ function render_new() {
 //
 
 function render() {
-  render_new();
-}
 
+  resize(gl.canvas);
+
+  animate_y_offset();
+  animate_y_scale();
+
+  // Tell WebGL how to convert from clip space to pixels
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  gl.clearColor(1, 1, 0, 0);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.disable(gl.BLEND);
+
+  // render_texture();
+
+  var is_draw_lines = true;
+
+  if (is_draw_lines) {
+     render_lines();
+  }
+
+   render_rectangles();
+  
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-//     resizeXXX
+//     resizeEventHandler
 //
 
-function resizeXXX(event) {
+function resizeEventHandler(event) {
   requestAnimationFrame(render);
 }
 
