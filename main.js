@@ -1,61 +1,6 @@
 
 "use strict";
 
-var vertexShaderSourceTEX = `#version 300 es
-
-// an attribute is an input (in) to a vertex shader.
-// It will receive data from a buffer
-in vec3 a_positionTEX;
-
-in vec2 a_texcoordTEX;
-
-out float colorValueTEX;
-
-// a varying to pass the texture coordinates to the fragment shader
-out vec2 v_texcoordTEX;
-
-
-// Resolution of canvas
-uniform vec2 u_resolutionTEX;
-
-// Extent of content, range 0:inclusive -> value: exclusive.
-uniform vec2 u_contents_sizeTEX;
-
-uniform vec2 pixel_offsetTEX;
-
-uniform float y_scaleTEX;
-
-// all shaders have a main function
-void main() {
- 
-  vec2 offsetpixel = a_positionTEX.xy - pixel_offsetTEX;
-
-  offsetpixel.y *= y_scaleTEX;
-
-  // convert the position from pixels to 0.0 to 1.0
-  vec2 zeroToOne = offsetpixel / u_resolutionTEX;
-
-
-  zeroToOne = zeroToOne * u_contents_sizeTEX;
-
-  // vec2 zeroToOne = u_contents_size * offsetpixel;
-
-  // convert from 0->1 to 0->2
-  vec2 zeroToTwo = zeroToOne * 2.0;
-
-  // convert from 0->2 to -1->+1 (clipspace)
-  vec2 clipSpace = zeroToTwo - 1.0;
-
-  gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
-
-  colorValueTEX = a_positionTEX.z;
-
-  // Pass the texcoord to the fragment shader.
-  v_texcoordTEX = a_texcoordTEX;
-}
-`;
-
-
 var vertexShaderSourceBASIC = `#version 300 es
 
 // an attribute is an input (in) to a vertex shader.
@@ -75,7 +20,6 @@ uniform vec2 pixel_offset;
 
 uniform float y_scale;
 
-// all shaders have a main function
 void main() {
  
   vec2 offsetpixel = a_position.xy - pixel_offset;
@@ -113,41 +57,24 @@ out vec4 outColor;
 in float colorValue;
 
 void main() {
-  if (colorValue < 0.3)
+  if (colorValue < 0.31)
   {
-   outColor = vec4(colorValue, colorValue * .1,0, 0.7);
+   outColor = vec4(0, 1, 0, 0.7);
   }
-  else if (colorValue < 0.6)
+  else if (colorValue < 0.61)
   {
-    outColor = vec4(0, colorValue, 0, 0.4);
+    outColor = vec4(0, 0, 1, 0.7);
   }
+  else if (colorValue < 0.9)
+  {
+    outColor = vec4(0, 0, 0, 0.15);
+  }
+
   else
   {
-    outColor = vec4(0, 0, colorValue, 0.7);
+    outColor = vec4(0, 0, 0, 0.6);
   }
   
-}
-`;
-
-var fragmentShaderSourceTEX = `#version 300 es
-
-precision mediump float;
-
-// Passed in from the vertex shader.
-in vec2 v_texcoordTEX;
-
-// The texture.
-uniform sampler2D u_textureTEX;
-
-
-
-// we need to declare an output for the fragment shader
-out vec4 outColor;
-
-in float colorValueTEX;
-
-void main() {
-  outColor = texture(u_textureTEX, v_texcoordTEX);
 }
 `;
 
@@ -163,23 +90,7 @@ var offsetLocation;
 var y_scaleLocation;
 
 var rectangleBuffer;
-var vao;
-var lineBuffer;
-
-var programTex;
-var rectangleBufferTexTex;
-var rectangleBufferPosTex;
-var vaoTex;
-var positionAttributeLocationTex;
-var texAttributeLocationTex;
-
-var resolutionUniformLocationTex;
-var contentsizeUniformLocationTex;
-var offsetLocationTex;
-var y_scaleLocationTex;
-var usamplerTex;
-
-
+var vao_rectangles;
 
 var offsetX = 0;
 var offsetY = 0;
@@ -189,12 +100,18 @@ var offsetY_anim = offsetY;
 var W = 300;
 
 var y_scale = 1;
-var row_size = 12;
+var row_size = 15;
 var rectangle_thickness = 7;
+
+var bar_thickness = 14;
 
 var nRectangleCount = 0;
 
 var nMaxChunk = 5;
+
+var isYearLines = true;
+
+var person_offset;
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -222,6 +139,19 @@ var json_raw = [];
 
 
 
+function getNumberOfYearLines()
+{
+  var
+    nYearLines = 0;
+
+  for (var iYear = 1996; iYear < 2018; iYear++) {
+    nYearLines++;
+  }
+
+  return nYearLines;
+
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 //     getNumberOfRectangles
@@ -231,6 +161,15 @@ function getNumberOfRectangles()
 {
   var
     nRectangles = 0;
+
+  // Year bars
+
+  nRectangles += getNumberOfYearLines();
+  
+
+  
+
+  // Intervals
 
   for (var iChunk = 0; iChunk < nMaxChunk; iChunk++) {
 
@@ -257,113 +196,7 @@ function getNumberOfRectangles()
   return nRectangles;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////
-//
-//     addLine
-//
 
-function addLine(f, i, x0, y0, x1, y1, c) {
-
-  f[i + 0] = x0;
-  f[i + 1] = y0;
-  f[i + 2] = c;
-
-  f[i + 3] = x1;
-  f[i + 4] = y1;
-  f[i + 5] = c;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////
-//
-//     getLineCount
-//
-
-function getLineCount()
-{
-
-  var
-    nLines = 0;
-
-  
-  // Year lines
-  var
-    nYearLineCount = 0;
-
-  for (var iYear = 1996; iYear < 2018; iYear++) {
-    nYearLineCount++;
-  }
-
-  nLines += nYearLineCount;
-  
-  // Test lines
-  nLines += 2;
-
-  return nLines;
-
-}
-
-
-
-///////////////////////////////////////////////////////////////////////////////////////
-//
-//     buildLines
-//
-
-function buildLines(f, w)
-{
-
-  var
-    i = 0;
-
-  // Year lines:
-
-  for (var iYear = 1996; iYear < 2018; iYear++) {
-
-
-    var time = (iYear - 1970) * 365.242199;
-
-    var x = get_x_from_time(w, time);
-   
-    addLine(f, i, x, 0, x, 2000, 0.9);
-    i += 6;
-
-  }
-
-
-
-  // Test lines:
-
-  addLine(f, i, w / 2, 0, w / 2, 2000, 0.9);
-  i += 6;
-
-  addLine(f, i, 0, 500, w, 500, 0.3);
-  i += 6;
-
-}
-
-///////////////////////////////////////////////////////////////////////////////////////
-//
-//     buildGLLines
-//
-
-function buildGLLines(w)
-{
-  var nVertexPerLine = 2;
-
-  var nElementsPerVertex = 3;
-
-  var nElementsPerLine = nVertexPerLine * nElementsPerVertex;
-
-
-  var cpu_data = new Float32Array(getLineCount() * nElementsPerLine);
-
-  buildLines(cpu_data, w);
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, cpu_data, gl.STATIC_DRAW);
-
-  cpu_data = null;
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -387,92 +220,6 @@ function getNumberOfPersons() {
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-//     buildGLTex
-//
-
-function buildGLTex()
-{
-
-  
-  var f_tex = new Float32Array(1 * 6 * 2);
-
-  var u1 = 0;
-  var v1 = 0;
-
-  var u2 = 1;
-  var v2 = 1;
-
-  var iOffset = 0;
-
-  f_tex[iOffset + 0] = u1;
-  f_tex[iOffset + 1] = v1;
-  
-  f_tex[iOffset + 2] = u2;
-  f_tex[iOffset + 3] = v1;
-
-  f_tex[iOffset + 4] = u1;
-  f_tex[iOffset + 5] = v2;
-
-  f_tex[iOffset + 6] = u1;
-  f_tex[iOffset + 7] = v2;
-
-  f_tex[iOffset + 8] = u2;
-  f_tex[iOffset + 9] = v1;
-
-  f_tex[iOffset + 10] = u2;
-  f_tex[iOffset + 11] = v2;
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, rectangleBufferTexTex);
-  gl.bufferData(gl.ARRAY_BUFFER, f_tex, gl.STATIC_DRAW);
-
-  f_tex = null;
-
-  var f_pos = new Float32Array(1 * 6 * 3);
-
-  var x1 = 50;
-  var y1 = 70;
-
-  var x2 = 200;
-  var y2 = 260;
-
-  var c = 0.4;
-  
-  var iOffset = 0;
-
-
-  f_pos[iOffset + 0] = x1;
-  f_pos[iOffset + 1] = y1;
-  f_pos[iOffset + 2] = c;
-
-  f_pos[iOffset + 3] = x2;
-  f_pos[iOffset + 4] = y1;
-  f_pos[iOffset + 5] = c;
-
-  f_pos[iOffset + 6] = x1;
-  f_pos[iOffset + 7] = y2;
-  f_pos[iOffset + 8] = c;
-
-  f_pos[iOffset + 9] = x1;
-  f_pos[iOffset + 10] = y2;
-  f_pos[iOffset + 11] = c;
-
-  f_pos[iOffset + 12] = x2;
-  f_pos[iOffset + 13] = y1;
-  f_pos[iOffset + 14] = c;
-
-  f_pos[iOffset + 15] = x2;
-  f_pos[iOffset + 16] = y2;
-  f_pos[iOffset + 17] = c;
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, rectangleBufferPosTex);
-  gl.bufferData(gl.ARRAY_BUFFER, f_pos, gl.STATIC_DRAW);
-
-
-  f_pos = null;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////
-//
 //     buildGLFromData
 //
 
@@ -490,8 +237,36 @@ function buildGLFromData(w)
 
   var cpu_data = new Float32Array(nPrimitives * nElementsPerRectangle);
 
+
+  person_offset = new Int32Array(getNumberOfPersons());
+
+
+
   var
     iOffset = 0;
+
+  // Year bars
+
+ 
+  for (var iYear = 1996; iYear < 2018; iYear++) {
+
+    var time = (iYear - 1970) * 365.242199;
+
+    if (iYear == 2002 || iYear == 2005 || iYear == 2015)
+    {
+      color = 0.99;
+    }
+
+    build_bar_rectangle(cpu_data, iOffset, time, time + bar_thickness, color, w);
+
+    iOffset += nElementsPerRectangle;
+
+  }
+
+  
+
+
+  // Intervals
 
   for (var iChunk = 0; iChunk < nMaxChunk; iChunk++) {
 
@@ -507,12 +282,20 @@ function buildGLFromData(w)
       var events = q.E;
       var nEvents = events.length;
 
+      person_offset[id] = iOffset / nElementsPerVertex;
+
+
+      var time0 = (1995 - 1970) * 365.242199;
+      var time1 = (2018 - 1970) * 365.242199;
+
+      build_interval_rectangle(cpu_data, iOffset, id, time0, time1, 0.8, w);
+      iOffset += nElementsPerRectangle;
       
       for (var iEvent = 0; iEvent < nEvents; iEvent++)
       {
         var begin = events[iEvent];
         var end = begin - 14;
-        var color = 0.9;
+        var color = 0.6;
 
         build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, w);
 
@@ -541,7 +324,7 @@ function buildGLFromData(w)
   }
 
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, rectangleBuffer);
+ 
   gl.bufferData(gl.ARRAY_BUFFER, cpu_data, gl.STATIC_DRAW);
 
   cpu_data = null;
@@ -562,20 +345,15 @@ function transferComplete(evt) {
 
     if (loading_state < 4)
     {
-      console.log("Issuing new load");
       loading_state++;
+      console.log("Issuing load #" + loading_state);
+
       LoadData();
     }
     else
     {
-      console.log("All loading done. Starting GL");
-
-      // setupGLTex();
-      setupGL();
-
-     
-
-
+      setupProgram();
+      setupRectangles();
       requestAnimationFrame(render);
     }
 }
@@ -623,95 +401,8 @@ function LoadData() {
 
 }
 
-///////////////////////////////////////////////////////////////////////////////////////
-//
-//     setupGLTex
-//
-
-function setupGLTex() {
-
-  // Create a buffer
-  rectangleBufferTexTex = gl.createBuffer();
-  rectangleBufferPosTex = gl.createBuffer();
-
-  buildGLTex();
-
-  // Use our boilerplate utils to compile the shaders and link into a program
-  programTex = webglUtils.createProgramFromSources(gl,
-    [vertexShaderSourceTEX, fragmentShaderSourceTEX]);
-
-  gl.useProgram(programTex);
-
-
-  // look up where the vertex data needs to go.
-  positionAttributeLocationTex = GetUniformLocation(programTex, "a_positionTEX", false);
-
-  texAttributeLocationTex = GetUniformLocation(programTex, "a_texcoordTEX", false);
-
-  resolutionUniformLocationTex = GetUniformLocation(programTex, "u_resolutionTEX", true);
-  contentsizeUniformLocationTex = GetUniformLocation(programTex, "u_contents_sizeTEX", true);
-  offsetLocationTex = GetUniformLocation(programTex, "pixel_offsetTEX", true);
-  y_scaleLocationTex = GetUniformLocation(programTex, "y_scaleTEX", true);
-
-  usamplerTex = GetUniformLocation(programTex, "u_textureTEX", true);
-  
-  // Create a vertex array object (attribute state)
-  vaoTex = gl.createVertexArray();
-
-
-   // Create a texture.
-  var texture = gl.createTexture();
-  
-
-  // fill texture with 4x4 pixels
-  const level = 0;
-  const internalFormat = gl.R8;
-  const width = 4;
-  const height = 4;
-  const border = 0;
-  const format = gl.RED;
-  const type = gl.UNSIGNED_BYTE;
-  const data = new Uint8Array([
-    128, 64, 128,   0, 192, 0, 12, 142,
-      0, 34, 200, 100, 255, 6, 88, 187 
-  ]);
-
-  // bind to the TEXTURE_2D bind point of texture unit 0
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-
-  gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, width, height, border,
-    format, type, data);
-
-  // set the filtering so we don't need mips and it's not filtered
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-
-  gl.activeTexture(gl.TEXTURE0 + 0);
- 
-
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////
-//
-//     setupGL
-//
-
-function setupGL()
+function setupProgram()
 {
-
-  // Create a buffer
-  rectangleBuffer = gl.createBuffer();
-
-  lineBuffer = gl.createBuffer();
-
-
-  buildGLFromData(W);
-
-  buildGLLines(W);
-
   // Use our boilerplate utils to compile the shaders and link into a program
   program = webglUtils.createProgramFromSources(gl,
     [vertexShaderSourceBASIC, fragmentShaderSourceBASIC]);
@@ -723,9 +414,41 @@ function setupGL()
   contentsizeUniformLocation = GetUniformLocation(program, "u_contents_size", true);
   offsetLocation = GetUniformLocation(program, "pixel_offset", true);
   y_scaleLocation = GetUniformLocation(program, "y_scale", true);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     setupRectangles
+//
+
+function setupRectangles()
+{
+
+  console.log("setupRectangles()");
+
+  rectangleBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, rectangleBuffer);
+  buildGLFromData(W);
+
 
   // Create a vertex array object (attribute state)
-  vao = gl.createVertexArray();
+  vao_rectangles = gl.createVertexArray();
+
+  // and make it the one we're currently working with
+  gl.bindVertexArray(vao_rectangles);
+
+  // Turn on the attribute
+  gl.enableVertexAttribArray(positionAttributeLocation);
+
+  // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
+  var size = 3;          // 3 components per iteration
+  var type = gl.FLOAT;   // the data is 32bit floats
+  var normalize = false; // don't normalize the data
+  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+  var offset = 0;        // start at the beginning of the buffer
+  gl.vertexAttribPointer(
+    positionAttributeLocation, size, type, normalize, stride, offset);
 
 }
 
@@ -769,6 +492,19 @@ function main() {
 
 function write_rectangle(f, iOffset, x1, y1, x2, y2, color)
 {
+/*
+  var
+    swap = x1;
+
+  x1 = y1;
+  y1 = swap;
+
+  swap = x2;
+
+  x2 = y2;
+  y2 = swap;
+*/
+
   f[iOffset + 0] = x1;
   f[iOffset + 1] = y1;
   f[iOffset + 2] = color;
@@ -814,18 +550,38 @@ function get_x_from_time(w, time)
 //     build_interval_rectangle
 //
 
+function build_bar_rectangle(f, iOffset, begin, end, color, w)
+{
+  var x1 = get_x_from_time(w, begin);
+  var x2 = get_x_from_time(w, end);
+
+  var y1 = 0 * row_size;
+  var y2 = 5000 * row_size;
+
+  write_rectangle(f, iOffset, x1, y1, x2, y2, color);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     build_interval_rectangle
+//
+
 function build_interval_rectangle(f, iOffset, id, begin, end, color, w)
 {
   var x1 = get_x_from_time(w, begin);
   var x2 = get_x_from_time(w, end);
-  
-  
+
 
   var y1 = id * row_size;
   var y2 = y1 + rectangle_thickness;
 
   write_rectangle(f, iOffset, x1, y1, x2, y2, color);
 }
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     resize
+//
 
 function resize(canvas) {
   // Lookup the size the browser is displaying the canvas.
@@ -843,27 +599,69 @@ function resize(canvas) {
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     get_row_min
+//
+
+function get_row_min() {
+
+  var
+    rOffsetYScaled = getOffsetY();
+
+
+  var
+    frow0 = -rOffsetYScaled;
+
+  frow0 = frow0 / row_size;
+
+  var
+    row0 = Math.round(frow0) - 1;
+
+  if (row0 < 0) {
+    row0 = 0;
+  }
+
+  return row0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     get_row_max
+//
+
+function get_row_max() {
+
+  var
+    rOffsetYScaled = getOffsetY();
+
+  var
+    frow1 = gl.canvas.height / y_scale - rOffsetYScaled;
+
+  frow1 = frow1 / row_size;
+
+  var
+    row1 = Math.round(frow1) + 1;
+
+  if (row1 < 0) {
+    row1 = 0;
+  }
+
+  return row1;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     render_rectangles
+//
+
 function render_rectangles() {
 
-  // Bind the attribute/buffer set we want.
-
-  gl.bindVertexArray(vao);
-  gl.enableVertexAttribArray(positionAttributeLocation);
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, rectangleBuffer);
-
-  // Tell the attribute how to get data out of rectangleBuffer (ARRAY_BUFFER)
-  var size = 3;          // 3 components per iteration
-  var type = gl.FLOAT;   // the data is 32bit floats
-  var normalize = false; // don't normalize the data
-  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-  var offset = 0;        // start at the beginning of the buffer
-
-
-  gl.vertexAttribPointer(
-    positionAttributeLocation, size, type, normalize, stride, offset);
 
   gl.useProgram(program);
+
+  // Bind the attribute/buffer set we want.
+  gl.bindVertexArray(vao_rectangles);
 
 
   var
@@ -877,93 +675,56 @@ function render_rectangles() {
   gl.uniform2f(offsetLocation, 0, -y);
   gl.uniform1f(y_scaleLocation, y_scale);
 
-  var offset = 0;
 
-  var count = 6000 * 6; // nRectangleCount * 6;
+  var count = nRectangleCount * 6;
 
-  gl.drawArrays(gl.TRIANGLES, offset, count);
-}
+  
+  if (isYearLines) {
+    gl.drawArrays(gl.TRIANGLES, 0, 6 * getNumberOfYearLines());
+  }
 
-function render_lines() {
+  var offset = 6 * getNumberOfYearLines();
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
+  count -= offset;
 
-  // Tell the attribute how to get data out of rectangleBuffer (ARRAY_BUFFER)
-  var size = 3;          // 3 components per iteration
-  var type = gl.FLOAT;   // the data is 32bit floats
-  var normalize = false; // don't normalize the data
-  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-  var offset = 0;        // start at the beginning of the buffer
+  // gl.drawArrays(gl.TRIANGLES, offset, count);
 
-  gl.vertexAttribPointer(
-    positionAttributeLocation, size, type, normalize, stride, offset);
-
-  gl.drawArrays(gl.LINES, 0, 2 * getLineCount());
-
-}
+  
 
 
-function render_texture() {
+  
 
-  gl.bindVertexArray(vaoTex);
-
- 
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, rectangleBufferPosTex);
-
-
-  // Tell the attribute how to get data out of rectangleBuffer (ARRAY_BUFFER)
-  var size = 3;          // 3 components per iteration
-  var type = gl.FLOAT;   // the data is 32bit floats
-  var normalize = false; // don't normalize the data
-  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-  var offset = 0;        // start at the beginning of the buffer
-
-
-  gl.vertexAttribPointer(
-    positionAttributeLocationTex, size, type, normalize, stride, offset);
-
-  gl.enableVertexAttribArray(positionAttributeLocationTex);
-
-  // Turn on the attribute
- 
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, rectangleBufferTexTex);
-
-  // Tell the attribute how to get data out of colorBuffer (ARRAY_BUFFER)
-  var size = 2;          // 2 components per iteration
-  var type = gl.FLOAT;   // the data is 32bit floating point values
-  var normalize = true;  // convert from 0-255 to 0.0-1.0
-  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next color
-  var offset = 0;        // start at the beginning of the buffer
-
-  gl.vertexAttribPointer(
-    texAttributeLocationTex, size, type, normalize, stride, offset);
-
-  gl.enableVertexAttribArray(texAttributeLocationTex);
-
-  gl.activeTexture(gl.TEXTURE0 + 0);
-
-
-
- 
-
-  gl.useProgram(programTex);
+  
+  var
+    row0 = get_row_min();
 
   var
-    x_factor = gl.canvas.width / W;
+    row1 = get_row_max();
 
   var
-    y = getOffsetY();
+    offset0 = person_offset[row0];
 
-  gl.uniform2f(resolutionUniformLocationTex, gl.canvas.width, gl.canvas.height);
-  gl.uniform2f(contentsizeUniformLocationTex, x_factor, 1);
-  gl.uniform2f(offsetLocationTex, 0, -y);
-  gl.uniform1f(y_scaleLocationTex, y_scale);
+  var
+    offset1 = person_offset[row1];
 
-  gl.uniform1i(usamplerTex, 0);
+  if (offset0 > count)
+  {
+    return;
+  }
 
-  gl.drawArrays(gl.TRIANGLES, 0, 6);
+  var
+    newCount = offset1 - offset0;
+
+  if (offset0 + newCount > count)
+  {
+    newCount = count - offset0;
+  }
+
+  gl.drawArrays(gl.TRIANGLES, offset0, newCount);
+  
+
+
+  
 }
 
 
@@ -981,19 +742,14 @@ function render() {
 
   // Tell WebGL how to convert from clip space to pixels
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-  gl.clearColor(1, 1, 0, 0);
+  gl.clearColor(0, 0, 0, 0);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  gl.disable(gl.BLEND);
+  gl.disable(gl.DEPTH_TEST);
 
-  // render_texture();
-
-  var is_draw_lines = true;
-
-  if (is_draw_lines) {
-     render_lines();
-  }
-
-   render_rectangles();
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  
+  render_rectangles();
   
 }
 
@@ -1078,6 +834,7 @@ function handleMouseMove(event) {
 
   x_current = event.clientX - rect.left;
   y_current = event.clientY - rect.top;
+ 
 
   if (isDragging)
   {
@@ -1134,6 +891,18 @@ function handleMouseDown(event) {
   y_current = y_down;
 
   logCanvasSize();
+
+
+  // Display height extent in world space:
+
+  var
+    row0_new = get_row_min();
+
+  var
+    row1_new = get_row_max();
+
+  console.log('Rows on display2: [' + row0_new + ',' + row1_new + ']');
+
 
   console.log('handleMouseDown at (' + x_down + ',' + y_down + ')');
 }
