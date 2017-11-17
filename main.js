@@ -114,11 +114,37 @@ out vec4 outColor;
 
 void main() {
    outColor = texture(u_texture, quad_out_texcoord);
-   // outColor.w = 0.5;
 }
 
 `;
 
+
+var vertexShaderSourceRADAR = `#version 300 es
+
+in vec4 radar_position;
+ 
+// all shaders have a main function
+void main() {
+ 
+  // gl_Position is a special variable a vertex shader
+  // is responsible for setting
+  gl_Position = radar_position;
+}
+`;
+
+var fragmentShaderSourceRADAR = `#version 300 es
+
+precision mediump float;
+ 
+// we need to declare an output for the fragment shader
+out vec4 outColor;
+ 
+void main() {
+  // Just set the output to a constant redish-purple
+  outColor = vec4(1, 0.1, 0.0, 0.7);
+}
+
+`;
 
 var gl;
 var canvas;
@@ -151,6 +177,20 @@ var vao_text;
 var text_image;
 
 // Text resources end
+
+// Radar resources begin
+
+var program_radar;
+var radarPosAttributeLocation;
+
+var radarBuffer;
+
+var vao_radar;
+
+var f_radar;
+
+// Radar resources end
+
 
 var offsetX = 0;
 var offsetY = 0;
@@ -264,8 +304,6 @@ function getNumberOfRectangles()
   // Year bars
 
   nRectangles += getNumberOfYearLines();
-  
-
   
 
   // Intervals
@@ -449,6 +487,7 @@ function transferComplete(evt) {
     }
     else
     {
+      setupRadar();
       setupText();
       setupRectangles();
       requestAnimationFrame(render);
@@ -556,6 +595,87 @@ function addTextTextureCoords(g, offset, u_min, v_min, u_max, v_max)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
+//     setupRadar
+//
+
+function setupRadar() {
+
+  var vertexShader   = createShader(gl, gl.VERTEX_SHADER,   vertexShaderSourceRADAR);
+  var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSourceRADAR);
+
+  program_radar = createProgram(gl, vertexShader, fragmentShader);
+
+  radarPosAttributeLocation = gl.getAttribLocation(program_radar, "radar_position");
+
+  radarBuffer = gl.createBuffer();
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, radarBuffer);
+
+  var
+    x0 = -0.99,
+    y0 = -0.9,
+    x1 = -0.98,
+    y1 = 0.9,
+
+    x0_ = -1.0,
+    y0_ = 0.1,     // Low window
+    x1_ = -0.97,
+    y1_ = 0.2;     // High window
+
+
+  var positions = [
+    x0,  //  0
+    y0,  //  1
+    x1,  //  2
+    y0,  //  3
+    x0,  //  4
+    y1,  //  5
+    x0,  //  6
+    y1,  //  7
+    x1,  //  8
+    y0,  //  9
+    x1,  // 10
+    y1,  // 11
+
+    x0_, // 12
+    y0_, // 13   low window
+    x1_, // 14
+    y0_, // 15   low window
+    x0_, // 16
+    y1_, // 17   High window
+    x0_, // 18
+    y1_, // 19    High window
+    x1_, // 20
+    y0_, // 21    low window
+    x1_, // 22
+    y1_, // 23    High window
+
+  ];
+  
+  f_radar = new Float32Array(positions);
+
+  gl.bufferData(gl.ARRAY_BUFFER, f_radar, gl.DYNAMIC_DRAW);
+
+  
+  vao_radar = gl.createVertexArray();
+
+  gl.bindVertexArray(vao_radar);
+
+  gl.enableVertexAttribArray(radarPosAttributeLocation);
+
+  var size = 2;          // 2 components per iteration
+  var type = gl.FLOAT;   // the data is 32bit floats
+  var normalize = false; // don't normalize the data
+  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+  var offset = 0;        // start at the beginning of the buffer
+  gl.vertexAttribPointer(radarPosAttributeLocation, size, type, normalize, stride, offset);
+
+  
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
 //     setupText
 //
 
@@ -582,7 +702,7 @@ function setupText()
     image_w = text_image.width,
     image_h = text_image.height;
 
-  nTextRectangleCount = 22;
+  nTextRectangleCount = 1* 22;
   
 
   var f = new Float32Array(nTextRectangleCount * 12);
@@ -604,20 +724,29 @@ function setupText()
       time = (iYear - 1970.35) * 365.242199;
 
     var
-      x0 = get_x_from_time(1600, time),
-      y0 = 20,
-      x1 = x0 + image_w,
-      y1 = y0 + image_h / imageParts;
-    
-    var
       u_min = 0.0,
       u_max = 1.0,
       v_min = iPart / imageParts,
       v_max = (iPart + 1) / imageParts;
 
+    var
+      x0 = get_x_from_time(1600, time),
+      y0 = 100,
+      x1 = x0 + image_w,
+      y1 = y0 + image_h / imageParts;
+
     gOffset = addTextTextureCoords(g, gOffset, u_min, v_min, u_max, v_max);
     fOffset = addTextTriangles(f, fOffset, x0, y0, x1, y1);
 
+/*
+    x0 = get_x_from_time(1600, time),
+    y0 = 1000,
+    x1 = x0 + image_w,
+    y1 = y0 + image_h / imageParts;
+
+    gOffset = addTextTextureCoords(g, gOffset, u_min, v_min, u_max, v_max);
+    fOffset = addTextTriangles(f, fOffset, x0, y0, x1, y1);
+*/
     iPart++;
   }
 
@@ -943,6 +1072,65 @@ function get_row_max() {
   return row1;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     render_radar
+//
+
+function render_radar() {
+
+  // Change buffer:
+
+
+  var
+    nRows = getNumberOfPersons();
+
+  var
+    nFirstRow = get_row_min();
+
+  var
+    nLastRow = get_row_max();
+
+  var
+    showingRatio = (nLastRow - nFirstRow) / nRows;
+
+  var
+    showingSize = 1.8 * showingRatio;
+
+  var
+    nearTop = 0.9 - 1.8 * (nFirstRow / nRows); //  [ 0.5 .. 0]
+
+  var yTop = nearTop;
+
+  var yBottom = nearTop - showingSize;
+
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, radarBuffer);
+
+
+  f_radar[13] = yBottom;
+  f_radar[15] = yBottom;
+  f_radar[21] = yBottom;
+ 
+  f_radar[17] = yTop;
+  f_radar[19] = yTop;
+  f_radar[23] = yTop;
+
+  gl.bufferSubData(gl.ARRAY_BUFFER, 0, f_radar, 0, f_radar.length);
+
+  gl.useProgram(program_radar);
+  gl.bindVertexArray(vao_radar);
+
+  gl.drawArrays(gl.TRIANGLES, 0, 12);
+
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     render_text
+//
 
 function render_text() {
 
@@ -953,7 +1141,7 @@ function render_text() {
   var y = gl.canvas.height;
 
   var resolution_x = 1600.0; //  * (x / 1600);
-  var resolution_y = 1600.0; //  * (y / 1600);
+  var resolution_y = 1024.0; //  * (y / 1600);
 
   gl.uniform2f(textResolutionUniformLocation, resolution_x, resolution_y);
 
@@ -1049,6 +1237,7 @@ function render() {
   
   render_rectangles();
   render_text();
+  render_radar();
   
 }
 
