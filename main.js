@@ -1,7 +1,7 @@
 
 "use strict";
 
-var vertexShaderSourceBASIC = `#version 300 es
+var vertexShaderSourceRECTANGLES = `#version 300 es
 
 // an attribute is an input (in) to a vertex shader.
 // It will receive data from a buffer
@@ -29,10 +29,7 @@ void main() {
   // convert the position from pixels to 0.0 to 1.0
   vec2 zeroToOne = offsetpixel / u_resolution;
 
-
   zeroToOne = zeroToOne * u_contents_size;
-
-  // vec2 zeroToOne = u_contents_size * offsetpixel;
 
   // convert from 0->1 to 0->2
   vec2 zeroToTwo = zeroToOne * 2.0;
@@ -46,7 +43,7 @@ void main() {
 }
 `;
 
-var fragmentShaderSourceBASIC = `#version 300 es
+var fragmentShaderSourceRECTANGLES = `#version 300 es
 
 precision mediump float;
 
@@ -69,7 +66,6 @@ void main() {
   {
     outColor = vec4(0, 0, 0, 0.15);
   }
-
   else
   {
     outColor = vec4(0, 0, 0, 0.6);
@@ -78,11 +74,56 @@ void main() {
 }
 `;
 
+var vertexShaderSourceTEXT = `#version 300 es
+
+in vec2 quad_position;
+
+in vec2 quad_texcoord;
+
+uniform vec2 u_resolution;
+
+out vec2 quad_out_texcoord;
+
+void main() {
+ 
+// convert the position from pixels to 0.0 to 1.0
+vec2 zeroToOne = quad_position / u_resolution;
+
+// convert from 0->1 to 0->2
+vec2 zeroToTwo = zeroToOne * 2.0;
+
+// convert from 0->2 to -1->+1 (clipspace)
+vec2 clipSpace = zeroToTwo - 1.0;
+
+gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+
+quad_out_texcoord = quad_texcoord;
+  
+}
+`;
+
+var fragmentShaderSourceTEXT = `#version 300 es
+
+precision mediump float;
+
+in vec2 quad_out_texcoord;
+
+uniform sampler2D u_texture;
+
+out vec4 outColor;
+
+void main() {
+   outColor = texture(u_texture, quad_out_texcoord);
+   // outColor.w = 0.5;
+}
+
+`;
+
 
 var gl;
 var canvas;
 
-var program;
+var program_rect;
 var positionAttributeLocation;
 var resolutionUniformLocation;
 var contentsizeUniformLocation;
@@ -91,6 +132,25 @@ var y_scaleLocation;
 
 var rectangleBuffer;
 var vao_rectangles;
+
+
+// Text resources begin
+
+var program_text;
+
+var textPosAttributeLocation;
+var textTextureAttributeLocation;
+var textureLocation;
+
+var textResolutionUniformLocation;
+var textPosBuffer;
+var texturePosBuffer;
+
+var vao_text;
+
+var text_image;
+
+// Text resources end
 
 var offsetX = 0;
 var offsetY = 0;
@@ -107,11 +167,50 @@ var bar_thickness = 14;
 
 var nRectangleCount = 0;
 
+var nTextRectangleCount = 0;
+
 var nMaxChunk = 5;
 
 var isYearLines = true;
 
 var person_offset;
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     createShader
+//
+
+function createShader(gl, type, source) {
+  var shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+  if (success) {
+    return shader;
+  }
+
+  console.log(gl.getShaderInfoLog(shader));
+  gl.deleteShader(shader);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     createProgram
+//
+
+function createProgram(gl, vertexShader, fragmentShader) {
+  var program = gl.createProgram();
+  gl.attachShader(program, vertexShader);
+  gl.attachShader(program, fragmentShader);
+  gl.linkProgram(program);
+  var success = gl.getProgramParameter(program, gl.LINK_STATUS);
+  if (success) {
+    return program;
+  }
+
+  console.log(gl.getProgramInfoLog(program));
+  gl.deleteProgram(program);
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -346,13 +445,11 @@ function transferComplete(evt) {
     if (loading_state < 4)
     {
       loading_state++;
-      console.log("Issuing load #" + loading_state);
-
       LoadData();
     }
     else
     {
-      setupProgram();
+      setupText();
       setupRectangles();
       requestAnimationFrame(render);
     }
@@ -368,10 +465,10 @@ function updateProgress(oEvent) {
     if (oEvent.lengthComputable) {
         
         var percentComplete = oEvent.loaded / oEvent.total;
-        console.log("loading... (" + (100.0 * percentComplete).toPrecision(2) + " %)");
+        // console.log("loading... (" + (100.0 * percentComplete).toPrecision(2) + " %)");
 
     } else {
-        console.log("loading...");
+        // console.log("loading...");
     }
 }
 
@@ -390,10 +487,8 @@ function LoadData() {
 
     var data_url = "data" + loading_state + ".json"; 
 
-    console.log("LoadData()"); 
-
     xmlhttp.onreadystatechange = function () {
-        console.log("readyState = " + this.readyState + ", status = " + this.status);
+        // console.log("readyState = " + this.readyState + ", status = " + this.status);
     };
 
     xmlhttp.open("GET", data_url, true);
@@ -401,19 +496,196 @@ function LoadData() {
 
 }
 
-function setupProgram()
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     addTextTriangles
+//
+
+function addTextTriangles(f, offset, x0, y0, x1, y1)
 {
-  // Use our boilerplate utils to compile the shaders and link into a program
-  program = webglUtils.createProgramFromSources(gl,
-    [vertexShaderSourceBASIC, fragmentShaderSourceBASIC]);
+  f[offset + 0] = x0;
+  f[offset + 1] = y0;
 
-  // look up where the vertex data needs to go.
-  positionAttributeLocation = GetUniformLocation(program, "a_position", false);
+  f[offset + 2] = x1;
+  f[offset + 3] = y0;
 
-  resolutionUniformLocation = GetUniformLocation(program, "u_resolution", true);
-  contentsizeUniformLocation = GetUniformLocation(program, "u_contents_size", true);
-  offsetLocation = GetUniformLocation(program, "pixel_offset", true);
-  y_scaleLocation = GetUniformLocation(program, "y_scale", true);
+  f[offset + 4] = x0;
+  f[offset + 5] = y1;
+
+  f[offset + 6] = x0;
+  f[offset + 7] = y1;
+
+  f[offset + 8] = x1;
+  f[offset + 9] = y0;
+
+  f[offset + 10] = x1;
+  f[offset + 11] = y1;
+
+  return offset + 12;
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     addTextTextureCoords
+//
+
+function addTextTextureCoords(g, offset, u_min, v_min, u_max, v_max)
+{
+
+  g[offset + 0] = u_min;
+  g[offset + 1] = v_min;
+
+  g[offset + 2] = u_max;
+  g[offset + 3] = v_min;
+
+  g[offset + 4] = u_min;
+  g[offset + 5] = v_max;
+
+  g[offset + 6] = u_min;
+  g[offset + 7] = v_max;
+
+  g[offset + 8] = u_max;
+  g[offset + 9] = v_min;
+
+  g[offset + 10] = u_max;
+  g[offset + 11] = v_max;
+
+  return offset + 12;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     setupText
+//
+
+function setupText()
+{
+
+  var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSourceTEXT);
+  var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSourceTEXT);
+
+  program_text = createProgram(gl, vertexShader, fragmentShader);
+
+  textPosAttributeLocation = gl.getAttribLocation(program_text, "quad_position");
+  textTextureAttributeLocation = gl.getAttribLocation(program_text, "quad_texcoord");
+
+  textureLocation = gl.getUniformLocation(program_text, "u_texture");
+
+  textResolutionUniformLocation = gl.getUniformLocation(program_text, "u_resolution");
+
+  textPosBuffer = gl.createBuffer();
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, textPosBuffer);
+
+  var
+    image_w = text_image.width,
+    image_h = text_image.height;
+
+  nTextRectangleCount = 22;
+  
+
+  var f = new Float32Array(nTextRectangleCount * 12);
+  var g = new Float32Array(nTextRectangleCount * 12);
+
+  var fOffset = 0;
+  var gOffset = 0;
+
+  var
+    iPart = 1;    // Skip first (1995)
+
+  var
+    imageParts = 24;
+
+
+  for (var iYear = 1996; iYear < 2018; iYear++) {
+
+    var
+      time = (iYear - 1970.35) * 365.242199;
+
+    var
+      x0 = get_x_from_time(1600, time),
+      y0 = 20,
+      x1 = x0 + image_w,
+      y1 = y0 + image_h / imageParts;
+    
+    var
+      u_min = 0.0,
+      u_max = 1.0,
+      v_min = iPart / imageParts,
+      v_max = (iPart + 1) / imageParts;
+
+    gOffset = addTextTextureCoords(g, gOffset, u_min, v_min, u_max, v_max);
+    fOffset = addTextTriangles(f, fOffset, x0, y0, x1, y1);
+
+    iPart++;
+  }
+
+  gl.bufferData(gl.ARRAY_BUFFER, f, gl.STATIC_DRAW);
+
+  vao_text = gl.createVertexArray();
+  gl.bindVertexArray(vao_text);
+
+  gl.enableVertexAttribArray(textPosAttributeLocation);
+
+  var size = 2;          // 2 components per iteration
+  var type = gl.FLOAT;   // the data is 32bit floats
+  var normalize = false; // don't normalize the data
+  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+  var offset = 0;        // start at the beginning of the buffer
+
+  gl.vertexAttribPointer(textPosAttributeLocation, size, type, normalize, stride, offset)
+  
+  texturePosBuffer = gl.createBuffer();
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, texturePosBuffer);
+
+ 
+
+  gl.bufferData(gl.ARRAY_BUFFER, g, gl.STATIC_DRAW);
+
+  gl.enableVertexAttribArray(textTextureAttributeLocation);
+
+  var size = 2;          // 2 components per iteration
+  var type = gl.FLOAT;   // the data is 32bit floats
+  var normalize = false; // don't normalize the data
+  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+  var offset = 0;        // start at the beginning of the buffer
+  gl.vertexAttribPointer(
+    textTextureAttributeLocation, size, type, normalize, stride, offset)
+
+
+  // Create a texture.
+  var texture = gl.createTexture();
+
+  // make unit 0 the active texture uint
+  // (ie, the unit all other texture commands will affect
+  gl.activeTexture(gl.TEXTURE0 + 0);
+
+  // Bind it to texture unit 0' 2D bind point
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+
+  // Set the parameters so we don't need mips and so we're not filtering
+  // and we don't repeat
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+  // Upload the image into the texture.
+  var mipLevel = 0;               // the largest mip
+  var internalFormat = gl.RGBA;   // format we want in the texture
+  var srcFormat = gl.RGBA;        // format of data we are supplying
+  var srcType = gl.UNSIGNED_BYTE  // type of data we are supplying
+  gl.texImage2D(gl.TEXTURE_2D,
+    mipLevel,
+    internalFormat,
+    srcFormat,
+    srcType,
+    text_image);
+
+
+
 }
 
 
@@ -425,7 +697,21 @@ function setupProgram()
 function setupRectangles()
 {
 
-  console.log("setupRectangles()");
+  // Use our boilerplate utils to compile the shaders and link into a program
+  var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSourceRECTANGLES);
+  var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSourceRECTANGLES);
+
+  program_rect = createProgram(gl, vertexShader, fragmentShader);
+
+
+  // look up where the vertex data needs to go.
+  positionAttributeLocation = GetUniformLocation(program_rect, "a_position", false);
+
+  resolutionUniformLocation = GetUniformLocation(program_rect, "u_resolution", true);
+  contentsizeUniformLocation = GetUniformLocation(program_rect, "u_contents_size", true);
+  offsetLocation = GetUniformLocation(program_rect, "pixel_offset", true);
+  y_scaleLocation = GetUniformLocation(program_rect, "y_scale", true);
+
 
   rectangleBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, rectangleBuffer);
@@ -452,7 +738,17 @@ function setupRectangles()
 
 }
 
+function loadImage() {
 
+  console.log("Loading image...");
+
+  text_image = new Image();
+  text_image.src = "y2.jpg";
+  text_image.onload = function () {
+    console.log("Image has been loaded (" + text_image.width + "," + text_image.height + ")");
+    main2();
+  }
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -461,9 +757,18 @@ function setupRectangles()
 
 function main() {
 
+  loadImage();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     main2
+//
+
+function main2() {
+
   LoadData();
 
-  console.log("LoadData has been issued");
   // Get A WebGL context
   canvas = document.getElementById("c");
   gl = canvas.getContext("webgl2");
@@ -492,18 +797,6 @@ function main() {
 
 function write_rectangle(f, iOffset, x1, y1, x2, y2, color)
 {
-/*
-  var
-    swap = x1;
-
-  x1 = y1;
-  y1 = swap;
-
-  swap = x2;
-
-  x2 = y2;
-  y2 = swap;
-*/
 
   f[iOffset + 0] = x1;
   f[iOffset + 1] = y1;
@@ -650,6 +943,27 @@ function get_row_max() {
   return row1;
 }
 
+
+function render_text() {
+
+  gl.useProgram(program_text);
+  gl.bindVertexArray(vao_text);
+
+  var x = gl.canvas.width;
+  var y = gl.canvas.height;
+
+  var resolution_x = 1600.0; //  * (x / 1600);
+  var resolution_y = 1600.0; //  * (y / 1600);
+
+  gl.uniform2f(textResolutionUniformLocation, resolution_x, resolution_y);
+
+  gl.uniform1i(textureLocation, 0);
+
+  gl.drawArrays(gl.TRIANGLES, 0, nTextRectangleCount * 6);  // 6 vertices for one rectangle.
+
+
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 //     render_rectangles
@@ -657,12 +971,10 @@ function get_row_max() {
 
 function render_rectangles() {
 
-
-  gl.useProgram(program);
+  gl.useProgram(program_rect);
 
   // Bind the attribute/buffer set we want.
   gl.bindVertexArray(vao_rectangles);
-
 
   var
     x_factor = gl.canvas.width / W;
@@ -675,9 +987,7 @@ function render_rectangles() {
   gl.uniform2f(offsetLocation, 0, -y);
   gl.uniform1f(y_scaleLocation, y_scale);
 
-
   var count = nRectangleCount * 6;
-
   
   if (isYearLines) {
     gl.drawArrays(gl.TRIANGLES, 0, 6 * getNumberOfYearLines());
@@ -686,14 +996,6 @@ function render_rectangles() {
   var offset = 6 * getNumberOfYearLines();
 
   count -= offset;
-
-  // gl.drawArrays(gl.TRIANGLES, offset, count);
-
-  
-
-
-  
-
   
   var
     row0 = get_row_min();
@@ -721,10 +1023,6 @@ function render_rectangles() {
   }
 
   gl.drawArrays(gl.TRIANGLES, offset0, newCount);
-  
-
-
-  
 }
 
 
@@ -743,13 +1041,14 @@ function render() {
   // Tell WebGL how to convert from clip space to pixels
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
   gl.clearColor(0, 0, 0, 0);
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.clear(gl.COLOR_BUFFER_BIT);
   gl.disable(gl.DEPTH_TEST);
 
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   
   render_rectangles();
+  render_text();
   
 }
 
