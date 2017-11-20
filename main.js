@@ -56,7 +56,7 @@ in float colorValue;
 void main() {
   if (colorValue < 0.31)
   {
-   outColor = vec4(0, 1, 0, 0.7);
+   outColor = vec4(0.3, 1, 0, 0.7);
   }
   else if (colorValue < 0.61)
   {

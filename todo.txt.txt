@@ -1,0 +1,30 @@
+
+* Shaders to separate files.
+
+* Convert to typescript.
+
+* Check security. Permission to run on sensitive data. Confer with three.js
+
+* Check performance on typical production mobile PC.
+
+* Check performance for data on texture apporach.
+
+* Reorganize for database access or not. Implement more solid username and password isolation.
+
+* Full text support
+
+* Create JSON file for configuration
+
+* Define and announce API.
+
+
+
+
+
+
+
+
+
+
+
+
