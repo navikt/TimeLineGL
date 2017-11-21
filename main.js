@@ -1,78 +1,8 @@
 
 "use strict";
 
-var vertexShaderSourceRECTANGLES = `#version 300 es
-
-// an attribute is an input (in) to a vertex shader.
-// It will receive data from a buffer
-in vec3 a_position;
-
-
-out float colorValue;
-
-// Resolution of canvas
-uniform vec2 u_resolution;
-
-// Extent of content, range 0:inclusive -> value: exclusive.
-uniform vec2 u_contents_size;
-
-uniform vec2 pixel_offset;
-
-uniform float y_scale;
-
-void main() {
- 
-  vec2 offsetpixel = a_position.xy - pixel_offset;
-
-  offsetpixel.y *= y_scale;
-
-  // convert the position from pixels to 0.0 to 1.0
-  vec2 zeroToOne = offsetpixel / u_resolution;
-
-  zeroToOne = zeroToOne * u_contents_size;
-
-  // convert from 0->1 to 0->2
-  vec2 zeroToTwo = zeroToOne * 2.0;
-
-  // convert from 0->2 to -1->+1 (clipspace)
-  vec2 clipSpace = zeroToTwo - 1.0;
-
-  gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
-
-  colorValue = a_position.z;
-}
-`;
-
-var fragmentShaderSourceRECTANGLES = `#version 300 es
-
-precision mediump float;
-
-
-// we need to declare an output for the fragment shader
-out vec4 outColor;
-
-in float colorValue;
-
-void main() {
-  if (colorValue < 0.31)
-  {
-   outColor = vec4(0.3, 1, 0, 0.7);
-  }
-  else if (colorValue < 0.61)
-  {
-    outColor = vec4(0, 0, 1, 0.7);
-  }
-  else if (colorValue < 0.9)
-  {
-    outColor = vec4(0, 0, 0, 0.15);
-  }
-  else
-  {
-    outColor = vec4(0, 0, 0, 0.6);
-  }
-  
-}
-`;
+var vertexShaderSourceRECTANGLES;
+var fragmentShaderSourceRECTANGLES;
 
 var vertexShaderSourceTEXT = `#version 300 es
 
@@ -487,10 +417,7 @@ function transferComplete(evt) {
     }
     else
     {
-      setupRadar();
-      setupText();
-      setupRectangles();
-      requestAnimationFrame(render);
+      main3();
     }
 }
 
@@ -897,14 +824,58 @@ function main() {
 function main2() {
 
   LoadData();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     main3
+//
+function main3() {
+
+  var shaderXhr = new XMLHttpRequest();
+
+  shaderXhr.open("GET", "rectangles.vert", true);
+
+  shaderXhr.onload = function () {
+
+    vertexShaderSourceRECTANGLES = this.responseText;
+    main4();
+  };
+  shaderXhr.send(null);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     main4
+//
+function main4() {
+
+  var shaderXhr = new XMLHttpRequest();
+
+  shaderXhr.open("GET", "rectangles.frag", true);
+
+  shaderXhr.onload = function () {
+
+    fragmentShaderSourceRECTANGLES = this.responseText;
+    main5();
+  };
+  shaderXhr.send(null);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     main4
+//
+
+function main5() {
 
   // Get A WebGL context
   canvas = document.getElementById("c");
+
   gl = canvas.getContext("webgl2");
   if (!gl) {
     return;
   }
-  
 
   logCanvasSize();
 
@@ -916,6 +887,10 @@ function main2() {
 
   canvas.onmousewheel = handleMouseWheel;
 
+  setupRadar();
+  setupText();
+  setupRectangles();
+  requestAnimationFrame(render);
 }
 
 

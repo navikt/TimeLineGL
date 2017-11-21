@@ -5,6 +5,8 @@ TOOL
 
 * Shaders to separate files.
 
+* Full text support
+
 * Convert to typescript.
 
 * Check security. Permission to run on sensitive data. Confer with three.js
@@ -15,7 +17,7 @@ TOOL
 
 * Reorganize for database access or not. Implement more solid username and password isolation.
 
-* Full text support
+* Ways to present (several) overlapping intervals.
 
 * Create JSON file for configuration
 
@@ -25,9 +27,14 @@ TOOL
 
 * Hover/click to highlight functionality.
 
-* Filter, w. buttons
+==> * Filter, w. buttons
 
-* Sort, w.buttons
+==> * Sort, w.buttons
+
+* Performance on multi-screen, check
+
+* Age. Retired. Young. Entry as adult. 
+
 
 
 
