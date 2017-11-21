@@ -1,4 +1,8 @@
 
+
+TOOL
+----
+
 * Shaders to separate files.
 
 * Convert to typescript.
@@ -16,6 +20,32 @@
 * Create JSON file for configuration
 
 * Define and announce API.
+
+* (dynamisk) velge startdato
+
+* Hover/click to highlight functionality.
+
+* Filter, w. buttons
+
+* Sort, w.buttons
+
+
+
+DATA
+----
+
+* Alder, folkeregistrert dato (rett fra utland).
+
+* AA: Skaff selvstendig næringsdrivende
+
+* Lage 'bare' for aktive brukere.
+
+* Legge inn de 800 (elns) i tabellen. (Marker. go to)
+
+* Landbakgrunn
+
+* Ide: Bak om noen til å ha fiktive jobber for å dekke det man vet bare statistisk?
+  el: For å gå fra brudd til kontinuitet.
 
 
 
