@@ -1,11 +1,11 @@
 
 "use strict";
 
-
 var shader_source = [];
 
 var gl;
 var canvas;
+
 
 var program_rect;
 var positionAttributeLocation;
