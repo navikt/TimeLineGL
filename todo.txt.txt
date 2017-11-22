@@ -5,9 +5,11 @@ TOOL
 
 * Shaders to separate files.
 
-* Full text support
+* Full text support.
 
 * Convert to typescript.
+
+* Create JSON file for configuration.
 
 * Check security. Permission to run on sensitive data. Confer with three.js
 
@@ -15,11 +17,15 @@ TOOL
 
 * Check performance for data on texture apporach.
 
+* Performance read-outs.
+
+* Analyze performance on separate screen. (Room 4020).
+
 * Reorganize for database access or not. Implement more solid username and password isolation.
 
 * Ways to present (several) overlapping intervals.
 
-* Create JSON file for configuration
+
 
 * Define and announce API.
 
@@ -34,6 +40,9 @@ TOOL
 * Performance on multi-screen, check
 
 * Age. Retired. Young. Entry as adult. 
+
+* Fix scroll outside
+
 
 
 

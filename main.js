@@ -1,80 +1,8 @@
 
 "use strict";
 
-var vertexShaderSourceRECTANGLES;
-var fragmentShaderSourceRECTANGLES;
 
-var vertexShaderSourceTEXT = `#version 300 es
-
-in vec2 quad_position;
-
-in vec2 quad_texcoord;
-
-uniform vec2 u_resolution;
-
-out vec2 quad_out_texcoord;
-
-void main() {
- 
-// convert the position from pixels to 0.0 to 1.0
-vec2 zeroToOne = quad_position / u_resolution;
-
-// convert from 0->1 to 0->2
-vec2 zeroToTwo = zeroToOne * 2.0;
-
-// convert from 0->2 to -1->+1 (clipspace)
-vec2 clipSpace = zeroToTwo - 1.0;
-
-gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
-
-quad_out_texcoord = quad_texcoord;
-  
-}
-`;
-
-var fragmentShaderSourceTEXT = `#version 300 es
-
-precision mediump float;
-
-in vec2 quad_out_texcoord;
-
-uniform sampler2D u_texture;
-
-out vec4 outColor;
-
-void main() {
-   outColor = texture(u_texture, quad_out_texcoord);
-}
-
-`;
-
-
-var vertexShaderSourceRADAR = `#version 300 es
-
-in vec4 radar_position;
- 
-// all shaders have a main function
-void main() {
- 
-  // gl_Position is a special variable a vertex shader
-  // is responsible for setting
-  gl_Position = radar_position;
-}
-`;
-
-var fragmentShaderSourceRADAR = `#version 300 es
-
-precision mediump float;
- 
-// we need to declare an output for the fragment shader
-out vec4 outColor;
- 
-void main() {
-  // Just set the output to a constant redish-purple
-  outColor = vec4(1, 0.1, 0.0, 0.7);
-}
-
-`;
+var shader_source = [];
 
 var gl;
 var canvas;
@@ -417,7 +345,7 @@ function transferComplete(evt) {
     }
     else
     {
-      main3();
+      LoadShaders();
     }
 }
 
@@ -527,8 +455,8 @@ function addTextTextureCoords(g, offset, u_min, v_min, u_max, v_max)
 
 function setupRadar() {
 
-  var vertexShader   = createShader(gl, gl.VERTEX_SHADER,   vertexShaderSourceRADAR);
-  var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSourceRADAR);
+  var vertexShader   = createShader(gl, gl.VERTEX_SHADER,   shader_source[4]);
+  var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, shader_source[5]);
 
   program_radar = createProgram(gl, vertexShader, fragmentShader);
 
@@ -609,8 +537,8 @@ function setupRadar() {
 function setupText()
 {
 
-  var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSourceTEXT);
-  var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSourceTEXT);
+  var vertexShader = createShader(gl, gl.VERTEX_SHADER, shader_source[2]);
+  var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, shader_source[3]);
 
   program_text = createProgram(gl, vertexShader, fragmentShader);
 
@@ -754,8 +682,8 @@ function setupRectangles()
 {
 
   // Use our boilerplate utils to compile the shaders and link into a program
-  var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSourceRECTANGLES);
-  var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSourceRECTANGLES);
+  var vertexShader = createShader(gl, gl.VERTEX_SHADER, shader_source[0]);
+  var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, shader_source[1]);
 
   program_rect = createProgram(gl, vertexShader, fragmentShader);
 
@@ -826,45 +754,69 @@ function main2() {
   LoadData();
 }
 
-///////////////////////////////////////////////////////////////////////////////////////
-//
-//     main3
-//
-function main3() {
-
-  var shaderXhr = new XMLHttpRequest();
-
-  shaderXhr.open("GET", "rectangles.vert", true);
-
-  shaderXhr.onload = function () {
-
-    vertexShaderSourceRECTANGLES = this.responseText;
-    main4();
-  };
-  shaderXhr.send(null);
-}
+var
+  nCompleted = 0;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-//     main4
+//     signal_loaded
 //
-function main4() {
 
-  var shaderXhr = new XMLHttpRequest();
+function signal_loaded()
+{
+  nCompleted++;
 
-  shaderXhr.open("GET", "rectangles.frag", true);
-
-  shaderXhr.onload = function () {
-
-    fragmentShaderSourceRECTANGLES = this.responseText;
+  if (nCompleted == 6) {
+    console.log("All loaded");
     main5();
-  };
-  shaderXhr.send(null);
+  }
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-//     main4
+//     get_asynch
+//
+
+function get_asynch(url, index) {
+
+  var request = new XMLHttpRequest();
+  request.open("GET", url, true);
+
+  request.onload = function () {
+
+    shader_source[index] = this.responseText;
+
+    console.log("Loaded OK: " + url);
+
+    signal_loaded();
+  };
+  request.send(null);
+
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     LoadShaders()
+//
+
+function LoadShaders() {
+
+  get_asynch("shaders/rectangles.vert", 0);
+  get_asynch("shaders/rectangles.frag", 1);
+
+  get_asynch("shaders/text.vert", 2);
+  get_asynch("shaders/text.frag", 3);
+
+  get_asynch("shaders/radar.vert", 4);
+  get_asynch("shaders/radar.frag", 5);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     main5
 //
 
 function main5() {
