@@ -4,7 +4,6 @@
 // It will receive data from a buffer
 in vec3 a_position;
 
-
 out float colorValue;
 
 // Resolution of canvas

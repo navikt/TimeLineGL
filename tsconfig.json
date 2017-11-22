@@ -4,13 +4,18 @@
         "noImplicitReturns" : true,
         "noUnusedParameters" : true,
         "pretty" : true,
-        "target" : "es2017"
+        "target" : "es6",
+        "module": "none"
+            
 //        "noImplicitAny": true
 //        "removeComments": true,
 //        "preserveConstEnums": true,
 //        "sourceMap": true 
     },
     "files": [
+        "gl-utils.ts",
+        "radar.ts",
         "init.ts"
+        
     ]
 }

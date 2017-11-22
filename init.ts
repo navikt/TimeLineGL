@@ -1,5 +1,6 @@
 
-"use strict";
+
+
 
 let shader_source : string[] = [];
 
@@ -54,7 +55,7 @@ let offsetY : number = 0;
 
 let offsetY_anim = offsetY;
 
-let W : number = 300;
+let WORLD_WIDTH : number = 700;
 
 let y_scale : number = 1;
 let row_size : number = 15;
@@ -72,65 +73,10 @@ let isYearLines : boolean = true;
 
 let person_offset : Int32Array;
 
-///////////////////////////////////////////////////////////////////////////////////////
-//
-//     createShader
-//
-
-function createShader(gl : any, type : any, source : string) : number {
-  let shader : any = gl.createShader(type);
-  gl.shaderSource(shader, source);
-  gl.compileShader(shader);
-  let success : number = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-  if (success != 0) {
-    return shader;
-  }
-
-  console.log(gl.getShaderInfoLog(shader));
-  gl.deleteShader(shader);
-
-  return -1;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////
-//
-//     createProgram
-//
-
-function createProgram(gl : any, vertexShader : any, fragmentShader: any) : number {
-  var program = gl.createProgram();
-  gl.attachShader(program, vertexShader);
-  gl.attachShader(program, fragmentShader);
-  gl.linkProgram(program);
-  var success = gl.getProgramParameter(program, gl.LINK_STATUS);
-  if (success) {
-    return program;
-  }
-
-  console.log(gl.getProgramInfoLog(program));
-  gl.deleteProgram(program);
-
-  return -1;
-}
 
 
-///////////////////////////////////////////////////////////////////////////////////////
-//
-//     GetUniformLocation
-//
 
-function GetUniformLocation(p : number, name : string, isWarn : boolean) : number
-{
-  var
-    location = gl.getUniformLocation(p, name);
 
-  if (isWarn && location == null)
-  {
-    alert("GetUniformLocation: '" + name + "' not found");
-  }
-
-  return location;
-}
 
 
 let xmlhttp : XMLHttpRequest;
@@ -215,7 +161,7 @@ function getNumberOfPersons() : number {
 //     buildGLFromData
 //
 
-function buildGLFromData(w : number) : void
+function buildGLFromData(world_width : number) : void
 {
 
   const
@@ -255,7 +201,7 @@ function buildGLFromData(w : number) : void
       colorXXX = 0.4;
     }
 
-    build_bar_rectangle(cpu_data, iOffset, time, time + bar_thickness, colorXXX, w);
+    build_bar_rectangle(cpu_data, iOffset, time, time + bar_thickness, colorXXX, world_width);
 
     iOffset += nElementsPerRectangle;
 
@@ -284,7 +230,7 @@ function buildGLFromData(w : number) : void
       const time0 : number = (1995 - 1970) * 365.242199;
       const time1 : number = (2018 - 1970) * 365.242199;
 
-      build_interval_rectangle(cpu_data, iOffset, id, time0, time1, 0.8, w);
+      build_interval_rectangle(cpu_data, iOffset, id, time0, time1, 0.8, world_width);
       iOffset += nElementsPerRectangle;
       
       for (let iEvent : number = 0; iEvent < nEvents; iEvent++)
@@ -293,7 +239,7 @@ function buildGLFromData(w : number) : void
         const end : number = begin - 14;
         const color : number = 0.6;
 
-        build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, w);
+        build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, world_width);
 
         iOffset += nElementsPerRectangle;
 
@@ -309,7 +255,7 @@ function buildGLFromData(w : number) : void
         const end : number = aa_intervals[iAA + 1];
         const color : number = 0.3;
 
-        build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, w);
+        build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, world_width);
 
         iOffset += nElementsPerRectangle;
       }
@@ -454,10 +400,10 @@ function addTextTextureCoords(g : Float32Array, offset : number, u_min : number,
 
 function setupRadar() {
 
-  const vertexShader : any = createShader(gl, gl.VERTEX_SHADER,   shader_source[4]);
-  const fragmentShader : any = createShader(gl, gl.FRAGMENT_SHADER, shader_source[5]);
+  const vertexShader : any = gl_utils.createShader(gl, gl.VERTEX_SHADER,   shader_source[4]);
+  const fragmentShader : any = gl_utils.createShader(gl, gl.FRAGMENT_SHADER, shader_source[5]);
 
-  program_radar = createProgram(gl, vertexShader, fragmentShader);
+  program_radar = gl_utils.createProgram(gl, vertexShader, fragmentShader);
 
   radarPosAttributeLocation = gl.getAttribLocation(program_radar, "radar_position");
 
@@ -524,8 +470,6 @@ function setupRadar() {
   const offset : any = 0;        // start at the beginning of the buffer
   gl.vertexAttribPointer(radarPosAttributeLocation, size, type, normalize, stride, offset);
 
-  
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -536,10 +480,10 @@ function setupRadar() {
 function setupText()
 {
 
-  const vertexShader : any = createShader(gl, gl.VERTEX_SHADER, shader_source[2]);
-  const fragmentShader : any = createShader(gl, gl.FRAGMENT_SHADER, shader_source[3]);
+  const vertexShader : any = gl_utils.createShader(gl, gl.VERTEX_SHADER, shader_source[2]);
+  const fragmentShader : any = gl_utils.createShader(gl, gl.FRAGMENT_SHADER, shader_source[3]);
 
-  program_text = createProgram(gl, vertexShader, fragmentShader);
+  program_text = gl_utils.createProgram(gl, vertexShader, fragmentShader);
 
   textPosAttributeLocation = gl.getAttribLocation(program_text, "quad_position");
   textTextureAttributeLocation = gl.getAttribLocation(program_text, "quad_texcoord");
@@ -680,24 +624,24 @@ function setupText()
 function setupRectangles() : void
 {
   
-  const vertexShader : any = createShader(gl, gl.VERTEX_SHADER, shader_source[0]);
-  const fragmentShader : any = createShader(gl, gl.FRAGMENT_SHADER, shader_source[1]);
+  const vertexShader : any = gl_utils.createShader(gl, gl.VERTEX_SHADER, shader_source[0]);
+  const fragmentShader : any = gl_utils.createShader(gl, gl.FRAGMENT_SHADER, shader_source[1]);
 
-  program_rect = createProgram(gl, vertexShader, fragmentShader);
+  program_rect = gl_utils.createProgram(gl, vertexShader, fragmentShader);
 
 
   // look up where the vertex data needs to go.
-  positionAttributeLocation = GetUniformLocation(program_rect, "a_position", false);
+  positionAttributeLocation = gl_utils.GetUniformLocation(program_rect, "a_position", false);
 
-  resolutionUniformLocation = GetUniformLocation(program_rect, "u_resolution", true);
-  contentsizeUniformLocation = GetUniformLocation(program_rect, "u_contents_size", true);
-  offsetLocation = GetUniformLocation(program_rect, "pixel_offset", true);
-  y_scaleLocation = GetUniformLocation(program_rect, "y_scale", true);
+  resolutionUniformLocation = gl_utils.GetUniformLocation(program_rect, "u_resolution", true);
+  contentsizeUniformLocation = gl_utils.GetUniformLocation(program_rect, "u_contents_size", true);
+  offsetLocation = gl_utils.GetUniformLocation(program_rect, "pixel_offset", true);
+  y_scaleLocation = gl_utils.GetUniformLocation(program_rect, "y_scale", true);
 
 
   rectangleBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, rectangleBuffer);
-  buildGLFromData(W);
+  buildGLFromData(WORLD_WIDTH);
 
 
   // Create a vertex array object (attribute state)
@@ -738,7 +682,6 @@ function loadImage() : void {
 //
 
 function main() : void {
-
   loadImage();
 }
 
@@ -1085,7 +1028,7 @@ function render_rectangles() : void {
   gl.bindVertexArray(vao_rectangles);
 
   const
-    x_factor : number = gl.canvas.width / W;
+    x_factor : number = gl.canvas.width / WORLD_WIDTH;
 
   const
     y : number = getOffsetY();
@@ -1243,8 +1186,8 @@ function handleMouseMove(event : any) : void{
 
   const rect : ClientRect = canvas.getBoundingClientRect();
 
-  const x_current : number = event.clientX - rect.left;
-  const y_current : number = event.clientY - rect.top;
+  x_current = event.clientX - rect.left;
+  y_current = event.clientY - rect.top;
 
   if (isDragging)
   {
