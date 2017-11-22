@@ -304,9 +304,9 @@ function buildGLFromData(w)
       
       for (var iAA = 0; iAA < nAA; iAA += 2)
       {
-        var begin = aa_intervals[iAA + 0];
-        var end = aa_intervals[iAA + 1];
-        var color = 0.3;
+        const begin = aa_intervals[iAA + 0];
+        const end = aa_intervals[iAA + 1];
+        const color = 0.3;
 
         build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, w);
 
@@ -780,7 +780,7 @@ function signal_loaded()
 
 function get_asynch(url, index) {
 
-  var request = new XMLHttpRequest();
+  const request : any = new XMLHttpRequest();
   request.open("GET", url, true);
 
   request.onload = function () {

@@ -3,11 +3,10 @@
 TOOL
 ----
 
-* Shaders to separate files.
+* Convert to typescript.
 
 * Full text support.
 
-* Convert to typescript.
 
 * Create JSON file for configuration.
 
