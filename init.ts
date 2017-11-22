@@ -379,7 +379,7 @@ function LoadData() {
     xmlhttp.addEventListener("load", transferComplete);
     xmlhttp.addEventListener("progress", updateProgress);
 
-    var data_url = "data" + loading_state + ".json"; 
+    var data_url = "data/data" + loading_state + ".json"; 
 
     xmlhttp.onreadystatechange = function () {
         // console.log("readyState = " + this.readyState + ", status = " + this.status);
