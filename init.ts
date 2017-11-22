@@ -1,94 +1,95 @@
 
 "use strict";
 
-var shader_source = [];
+let shader_source : string[] = [];
 
-var gl;
-var canvas;
+let gl : any;
+let canvas : HTMLCanvasElement;
 
+let program_rect : any;
+let positionAttributeLocation : number;
+let resolutionUniformLocation : number;
+let contentsizeUniformLocation : number;
+let offsetLocation : number;
+let y_scaleLocation : number;
 
-var program_rect;
-var positionAttributeLocation;
-var resolutionUniformLocation;
-var contentsizeUniformLocation;
-var offsetLocation;
-var y_scaleLocation;
-
-var rectangleBuffer;
-var vao_rectangles;
+let rectangleBuffer : number;
+let vao_rectangles : number;
 
 
 // Text resources begin
 
-var program_text;
+let program_text : number;
 
-var textPosAttributeLocation;
-var textTextureAttributeLocation;
-var textureLocation;
+let textPosAttributeLocation : number;
+let textTextureAttributeLocation : number;
+let textureLocation : number;
 
-var textResolutionUniformLocation;
-var textPosBuffer;
-var texturePosBuffer;
+let textResolutionUniformLocation : number;
+let textPosBuffer : number;
+let texturePosBuffer : number;
 
-var vao_text;
+let vao_text : number;
 
-var text_image;
+let text_image : HTMLImageElement;
 
 // Text resources end
 
 // Radar resources begin
 
-var program_radar;
-var radarPosAttributeLocation;
+let program_radar : number;
+let radarPosAttributeLocation : number;
 
-var radarBuffer;
+let radarBuffer : number;
 
-var vao_radar;
+let vao_radar : number;
 
-var f_radar;
+let f_radar : Float32Array;
 
 // Radar resources end
 
 
-var offsetX = 0;
-var offsetY = 0;
+let offsetX : number = 0;
+let offsetY : number = 0;
 
-var offsetY_anim = offsetY;
+let offsetY_anim = offsetY;
 
-var W = 300;
+let W : number = 300;
 
-var y_scale = 1;
-var row_size = 15;
-var rectangle_thickness = 7;
+let y_scale : number = 1;
+let row_size : number = 15;
+let rectangle_thickness : number = 7;
 
-var bar_thickness = 14;
+let bar_thickness : number = 14;
 
-var nRectangleCount = 0;
+let nRectangleCount : number = 0;
 
-var nTextRectangleCount = 0;
+let nTextRectangleCount : number = 0;
 
-var nMaxChunk = 5;
+let nMaxChunk : number = 5;
 
-var isYearLines = true;
+let isYearLines : boolean = true;
 
-var person_offset;
+let person_offset : Int32Array;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 //     createShader
 //
 
-function createShader(gl, type, source) {
-  var shader = gl.createShader(type);
+function createShader(gl : any, type : any, source : string) : number {
+  let shader : any = gl.createShader(type);
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
-  var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-  if (success) {
+  let success : number = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+  if (success != 0) {
     return shader;
   }
 
   console.log(gl.getShaderInfoLog(shader));
   gl.deleteShader(shader);
+
+  return -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -96,7 +97,7 @@ function createShader(gl, type, source) {
 //     createProgram
 //
 
-function createProgram(gl, vertexShader, fragmentShader) {
+function createProgram(gl : any, vertexShader : any, fragmentShader: any) : number {
   var program = gl.createProgram();
   gl.attachShader(program, vertexShader);
   gl.attachShader(program, fragmentShader);
@@ -108,6 +109,8 @@ function createProgram(gl, vertexShader, fragmentShader) {
 
   console.log(gl.getProgramInfoLog(program));
   gl.deleteProgram(program);
+
+  return -1;
 }
 
 
@@ -116,30 +119,30 @@ function createProgram(gl, vertexShader, fragmentShader) {
 //     GetUniformLocation
 //
 
-function GetUniformLocation(p, string, isWarn)
+function GetUniformLocation(p : number, name : string, isWarn : boolean) : number
 {
   var
-    location = gl.getUniformLocation(p, string);
+    location = gl.getUniformLocation(p, name);
 
   if (isWarn && location == null)
   {
-    alert("GetUniformLocation: '" + string + "' not found");
+    alert("GetUniformLocation: '" + name + "' not found");
   }
 
   return location;
 }
 
 
-var xmlhttp;
-var loading_state = 0;
-var json_raw = [];
+let xmlhttp : XMLHttpRequest;
+let loading_state : number = 0;
+let json_raw : any[] = [];
 
 
 
-function getNumberOfYearLines()
+function getNumberOfYearLines() : number
 {
-  var
-    nYearLines = 0;
+  let
+    nYearLines : number = 0;
 
   for (var iYear = 1996; iYear < 2018; iYear++) {
     nYearLines++;
@@ -154,10 +157,10 @@ function getNumberOfYearLines()
 //     getNumberOfRectangles
 //
 
-function getNumberOfRectangles()
+function getNumberOfRectangles() : number
 {
-  var
-    nRectangles = 0;
+  let
+    nRectangles : number = 0;
 
   // Year bars
 
@@ -166,22 +169,17 @@ function getNumberOfRectangles()
 
   // Intervals
 
-  for (var iChunk = 0; iChunk < nMaxChunk; iChunk++) {
+  for (let iChunk : number = 0; iChunk < nMaxChunk; iChunk++) {
 
-    var
-      i = json_raw[iChunk];
+    let
+      i : any[] = json_raw[iChunk];
 
-    for (var iPerson = 0; iPerson < i.length; iPerson++) {
+    for (let iPerson : number = 0; iPerson < i.length; iPerson++) {
 
-      var q = i[iPerson];
+      const q : any = i[iPerson];
 
-
-      var events = q.E;
-      var nEvents = events.length;
-
-      var aa_intervals = q.AA;
-      var nAA = aa_intervals.length;
-
+      const nEvents : number = q.E.length;
+      const nAA : number = q.AA.length;
 
       nRectangles += nEvents;
       nRectangles += nAA;
@@ -192,20 +190,19 @@ function getNumberOfRectangles()
 }
 
 
-
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 //     getNumberOfPersons
 //
 
-function getNumberOfPersons() {
+function getNumberOfPersons() : number {
 
-  var nPersons = 0;
+  let nPersons : number = 0;
 
-  for (var iChunk = 0; iChunk < nMaxChunk; iChunk++) {
+  for (let iChunk : number = 0; iChunk < nMaxChunk; iChunk++) {
 
-    var
-      i = json_raw[iChunk];
+    let
+      i : any = json_raw[iChunk];
 
     nPersons += i.length;
   }
@@ -218,79 +215,83 @@ function getNumberOfPersons() {
 //     buildGLFromData
 //
 
-function buildGLFromData(w)
+function buildGLFromData(w : number) : void
 {
 
-  var
-    nPrimitives = getNumberOfRectangles();
+  const
+    nPrimitives : number = getNumberOfRectangles();
 
-  var nVertexPerRectangle = 6;
+  const    
+    nVertexPerRectangle : number = 6;
 
-  var nElementsPerVertex = 3;
+  const    
+    nElementsPerVertex : number = 3;
 
-  var nElementsPerRectangle = nVertexPerRectangle * nElementsPerVertex;
+  const
+    nElementsPerRectangle : number = nVertexPerRectangle * nElementsPerVertex;
 
-  var cpu_data = new Float32Array(nPrimitives * nElementsPerRectangle);
-
+  let cpu_data : Float32Array = new Float32Array(nPrimitives * nElementsPerRectangle);
 
   person_offset = new Int32Array(getNumberOfPersons());
 
-
-
-  var
-    iOffset = 0;
+  let
+    iOffset : number = 0;
 
   // Year bars
-
  
-  for (var iYear = 1996; iYear < 2018; iYear++) {
+  for (let iYear : number = 1996; iYear < 2018; iYear++) {
 
-    var time = (iYear - 1970) * 365.242199;
+    const time : number = (iYear - 1970) * 365.242199;
+
+    let
+      colorXXX : number = 0.0;
 
     if (iYear == 2002 || iYear == 2005 || iYear == 2015)
     {
-      color = 0.99;
+      colorXXX = 0.99;
+    }
+    else
+    {
+      colorXXX = 0.4;
     }
 
-    build_bar_rectangle(cpu_data, iOffset, time, time + bar_thickness, color, w);
+    build_bar_rectangle(cpu_data, iOffset, time, time + bar_thickness, colorXXX, w);
 
     iOffset += nElementsPerRectangle;
 
   }
 
-  
-
 
   // Intervals
 
-  for (var iChunk = 0; iChunk < nMaxChunk; iChunk++) {
+  for (let iChunk : number = 0; iChunk < nMaxChunk; iChunk++) {
 
-    var
-      i = json_raw[iChunk];
+    let
+      i : any = json_raw[iChunk];
 
     console.log("Elements found : " + i.length);
 
-    for (var iPerson = 0; iPerson < i.length; iPerson++) {
+    for (let iPerson : number = 0; iPerson < i.length; iPerson++) {
 
-      var q = i[iPerson];
-      var id = q.id;
-      var events = q.E;
-      var nEvents = events.length;
+      const q : any = i[iPerson];
+      const id : number = q.id;
+      const events : any = q.E;
+      const nEvents : number = events.length;
 
       person_offset[id] = iOffset / nElementsPerVertex;
 
 
-      var time0 = (1995 - 1970) * 365.242199;
-      var time1 = (2018 - 1970) * 365.242199;
+      const time0 : number = (1995 - 1970) * 365.242199;
+      const time1 : number = (2018 - 1970) * 365.242199;
 
       build_interval_rectangle(cpu_data, iOffset, id, time0, time1, 0.8, w);
       iOffset += nElementsPerRectangle;
       
-      for (var iEvent = 0; iEvent < nEvents; iEvent++)
+      for (let iEvent : number = 0; iEvent < nEvents; iEvent++)
       {
-        var begin = events[iEvent];
-        var end = begin - 14;
-        var color = 0.6;
+        const begin : number = events[iEvent];
+        const end : number = begin - 14;
+        const color : number = 0.6;
 
         build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, w);
 
@@ -298,15 +299,15 @@ function buildGLFromData(w)
 
       }
       
-      var aa_intervals = q.AA;
-      var nAA = aa_intervals.length;
+      const aa_intervals : any[] = q.AA;
+      const nAA : number = aa_intervals.length;
 
       
-      for (var iAA = 0; iAA < nAA; iAA += 2)
+      for (let iAA : number = 0; iAA < nAA; iAA += 2)
       {
-        const begin = aa_intervals[iAA + 0];
-        const end = aa_intervals[iAA + 1];
-        const color = 0.3;
+        const begin : number = aa_intervals[iAA + 0];
+        const end : number = aa_intervals[iAA + 1];
+        const color : number = 0.3;
 
         build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, w);
 
@@ -317,12 +318,8 @@ function buildGLFromData(w)
 
     nRectangleCount = nPrimitives;
   }
-
-
  
   gl.bufferData(gl.ARRAY_BUFFER, cpu_data, gl.STATIC_DRAW);
-
-  cpu_data = null;
 
 }
 
@@ -332,7 +329,9 @@ function buildGLFromData(w)
 //     transferComplete
 //
 
-function transferComplete(evt) {
+function transferComplete(evt:any) {
+
+    evt;
 
     console.log("The transfer is complete for loading# " + loading_state);
 
@@ -355,10 +354,10 @@ function transferComplete(evt) {
 //     updateProgress
 //
 
-function updateProgress(oEvent) {
+function updateProgress(oEvent:any) {
     if (oEvent.lengthComputable) {
         
-        var percentComplete = oEvent.loaded / oEvent.total;
+        let percentComplete : number = oEvent.loaded / oEvent.total;
         // console.log("loading... (" + (100.0 * percentComplete).toPrecision(2) + " %)");
 
     } else {
@@ -379,7 +378,7 @@ function LoadData() {
     xmlhttp.addEventListener("load", transferComplete);
     xmlhttp.addEventListener("progress", updateProgress);
 
-    var data_url = "data/data" + loading_state + ".json"; 
+    const data_url : string = "data/data" + loading_state + ".json"; 
 
     xmlhttp.onreadystatechange = function () {
         // console.log("readyState = " + this.readyState + ", status = " + this.status);
@@ -395,7 +394,7 @@ function LoadData() {
 //     addTextTriangles
 //
 
-function addTextTriangles(f, offset, x0, y0, x1, y1)
+function addTextTriangles(f : Float32Array, offset : number, x0 : number, y0 : number, x1 : number, y1 : number)
 {
   f[offset + 0] = x0;
   f[offset + 1] = y0;
@@ -424,7 +423,7 @@ function addTextTriangles(f, offset, x0, y0, x1, y1)
 //     addTextTextureCoords
 //
 
-function addTextTextureCoords(g, offset, u_min, v_min, u_max, v_max)
+function addTextTextureCoords(g : Float32Array, offset : number, u_min : number, v_min : number, u_max : number, v_max : number)
 {
 
   g[offset + 0] = u_min;
@@ -455,8 +454,8 @@ function addTextTextureCoords(g, offset, u_min, v_min, u_max, v_max)
 
 function setupRadar() {
 
-  var vertexShader   = createShader(gl, gl.VERTEX_SHADER,   shader_source[4]);
-  var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, shader_source[5]);
+  const vertexShader : any = createShader(gl, gl.VERTEX_SHADER,   shader_source[4]);
+  const fragmentShader : any = createShader(gl, gl.FRAGMENT_SHADER, shader_source[5]);
 
   program_radar = createProgram(gl, vertexShader, fragmentShader);
 
@@ -466,19 +465,19 @@ function setupRadar() {
 
   gl.bindBuffer(gl.ARRAY_BUFFER, radarBuffer);
 
-  var
-    x0 = -0.99,
-    y0 = -0.9,
-    x1 = -0.98,
-    y1 = 0.9,
+  const
+    x0 : number = -0.99,
+    y0 : number = -0.9,
+    x1 : number = -0.98,
+    y1 : number = 0.9,
 
-    x0_ = -1.0,
-    y0_ = 0.1,     // Low window
-    x1_ = -0.97,
-    y1_ = 0.2;     // High window
+    x0_ : number = -1.0,
+    y0_ : number = 0.1,     // Low window
+    x1_ : number = -0.97,
+    y1_ : number = 0.2;     // High window
 
 
-  var positions = [
+  const positions : number[] = [
     x0,  //  0
     y0,  //  1
     x1,  //  2
@@ -518,11 +517,11 @@ function setupRadar() {
 
   gl.enableVertexAttribArray(radarPosAttributeLocation);
 
-  var size = 2;          // 2 components per iteration
-  var type = gl.FLOAT;   // the data is 32bit floats
-  var normalize = false; // don't normalize the data
-  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-  var offset = 0;        // start at the beginning of the buffer
+  const size : any = 2;          // 2 components per iteration
+  const type : any = gl.FLOAT;   // the data is 32bit floats
+  const normalize : any = false; // don't normalize the data
+  const stride : any = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+  const offset : any = 0;        // start at the beginning of the buffer
   gl.vertexAttribPointer(radarPosAttributeLocation, size, type, normalize, stride, offset);
 
   
@@ -537,8 +536,8 @@ function setupRadar() {
 function setupText()
 {
 
-  var vertexShader = createShader(gl, gl.VERTEX_SHADER, shader_source[2]);
-  var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, shader_source[3]);
+  const vertexShader : any = createShader(gl, gl.VERTEX_SHADER, shader_source[2]);
+  const fragmentShader : any = createShader(gl, gl.FRAGMENT_SHADER, shader_source[3]);
 
   program_text = createProgram(gl, vertexShader, fragmentShader);
 
@@ -553,42 +552,42 @@ function setupText()
 
   gl.bindBuffer(gl.ARRAY_BUFFER, textPosBuffer);
 
-  var
-    image_w = text_image.width,
-    image_h = text_image.height;
+  const
+    image_w : number = text_image.width,
+    image_h : number = text_image.height;
 
   nTextRectangleCount = 1* 22;
   
 
-  var f = new Float32Array(nTextRectangleCount * 12);
-  var g = new Float32Array(nTextRectangleCount * 12);
+  let f : Float32Array = new Float32Array(nTextRectangleCount * 12);
+  let g : Float32Array = new Float32Array(nTextRectangleCount * 12);
 
-  var fOffset = 0;
-  var gOffset = 0;
+  let fOffset : number = 0;
+  let gOffset : number = 0;
 
-  var
-    iPart = 1;    // Skip first (1995)
+  let
+    iPart : number = 1;    // Skip first (1995)
 
-  var
-    imageParts = 24;
+  const
+    imageParts : number = 24;
 
 
-  for (var iYear = 1996; iYear < 2018; iYear++) {
+  for (let iYear : number = 1996; iYear < 2018; iYear++) {
 
-    var
-      time = (iYear - 1970.35) * 365.242199;
+    const
+      time : number = (iYear - 1970.35) * 365.242199;
 
-    var
-      u_min = 0.0,
-      u_max = 1.0,
-      v_min = iPart / imageParts,
-      v_max = (iPart + 1) / imageParts;
+    const
+      u_min : number = 0.0,
+      u_max : number = 1.0,
+      v_min : number = iPart / imageParts,
+      v_max : number = (iPart + 1) / imageParts;
 
-    var
-      x0 = get_x_from_time(1600, time),
-      y0 = 100,
-      x1 = x0 + image_w,
-      y1 = y0 + image_h / imageParts;
+    const
+      x0 : number = get_x_from_time(1600, time),
+      y0 : number = 100,
+      x1 : number = x0 + image_w,
+      y1 : number = y0 + image_h / imageParts;
 
     gOffset = addTextTextureCoords(g, gOffset, u_min, v_min, u_max, v_max);
     fOffset = addTextTriangles(f, fOffset, x0, y0, x1, y1);
@@ -612,35 +611,35 @@ function setupText()
 
   gl.enableVertexAttribArray(textPosAttributeLocation);
 
-  var size = 2;          // 2 components per iteration
-  var type = gl.FLOAT;   // the data is 32bit floats
-  var normalize = false; // don't normalize the data
-  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-  var offset = 0;        // start at the beginning of the buffer
+  {
+    const size : any = 2;          // 2 components per iteration
+    const type : any = gl.FLOAT;   // the data is 32bit floats
+    const normalize : any = false; // don't normalize the data
+    const stride : any = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+    const offset : any = 0;        // start at the beginning of the buffer
 
-  gl.vertexAttribPointer(textPosAttributeLocation, size, type, normalize, stride, offset)
+    gl.vertexAttribPointer(textPosAttributeLocation, size, type, normalize, stride, offset);
+  }
   
   texturePosBuffer = gl.createBuffer();
 
   gl.bindBuffer(gl.ARRAY_BUFFER, texturePosBuffer);
 
- 
-
   gl.bufferData(gl.ARRAY_BUFFER, g, gl.STATIC_DRAW);
 
   gl.enableVertexAttribArray(textTextureAttributeLocation);
 
-  var size = 2;          // 2 components per iteration
-  var type = gl.FLOAT;   // the data is 32bit floats
-  var normalize = false; // don't normalize the data
-  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-  var offset = 0;        // start at the beginning of the buffer
-  gl.vertexAttribPointer(
-    textTextureAttributeLocation, size, type, normalize, stride, offset)
-
+  {
+    const size : any = 2;          // 2 components per iteration
+    const type : any = gl.FLOAT;   // the data is 32bit floats
+    const normalize : any = false; // don't normalize the data
+    const stride : any = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+    const offset : any = 0;        // start at the beginning of the buffer
+    gl.vertexAttribPointer(textTextureAttributeLocation, size, type, normalize, stride, offset);
+  }
 
   // Create a texture.
-  var texture = gl.createTexture();
+  const texture : any = gl.createTexture();
 
   // make unit 0 the active texture uint
   // (ie, the unit all other texture commands will affect
@@ -657,10 +656,10 @@ function setupText()
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
   // Upload the image into the texture.
-  var mipLevel = 0;               // the largest mip
-  var internalFormat = gl.RGBA;   // format we want in the texture
-  var srcFormat = gl.RGBA;        // format of data we are supplying
-  var srcType = gl.UNSIGNED_BYTE  // type of data we are supplying
+  const mipLevel : any = 0;               // the largest mip
+  const internalFormat : any = gl.RGBA;   // format we want in the texture
+  const srcFormat : any = gl.RGBA;        // format of data we are supplying
+  const srcType : any = gl.UNSIGNED_BYTE  // type of data we are supplying
   gl.texImage2D(gl.TEXTURE_2D,
     mipLevel,
     internalFormat,
@@ -678,12 +677,11 @@ function setupText()
 //     setupRectangles
 //
 
-function setupRectangles()
+function setupRectangles() : void
 {
-
-  // Use our boilerplate utils to compile the shaders and link into a program
-  var vertexShader = createShader(gl, gl.VERTEX_SHADER, shader_source[0]);
-  var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, shader_source[1]);
+  
+  const vertexShader : any = createShader(gl, gl.VERTEX_SHADER, shader_source[0]);
+  const fragmentShader : any = createShader(gl, gl.FRAGMENT_SHADER, shader_source[1]);
 
   program_rect = createProgram(gl, vertexShader, fragmentShader);
 
@@ -712,17 +710,17 @@ function setupRectangles()
   gl.enableVertexAttribArray(positionAttributeLocation);
 
   // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
-  var size = 3;          // 3 components per iteration
-  var type = gl.FLOAT;   // the data is 32bit floats
-  var normalize = false; // don't normalize the data
-  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-  var offset = 0;        // start at the beginning of the buffer
+  const size : any = 3;          // 3 components per iteration
+  const type : any = gl.FLOAT;   // the data is 32bit floats
+  const normalize : any = false; // don't normalize the data
+  const stride : any = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+  const offset : any = 0;        // start at the beginning of the buffer
   gl.vertexAttribPointer(
     positionAttributeLocation, size, type, normalize, stride, offset);
 
 }
 
-function loadImage() {
+function loadImage() : void {
 
   console.log("Loading image...");
 
@@ -739,7 +737,7 @@ function loadImage() {
 //     main
 //
 
-function main() {
+function main() : void {
 
   loadImage();
 }
@@ -749,7 +747,7 @@ function main() {
 //     main2
 //
 
-function main2() {
+function main2() : void {
 
   LoadData();
 }
@@ -762,7 +760,7 @@ var
 //     signal_loaded
 //
 
-function signal_loaded()
+function signal_loaded() : void
 {
   nCompleted++;
 
@@ -778,7 +776,7 @@ function signal_loaded()
 //     get_asynch
 //
 
-function get_asynch(url, index) {
+function get_asynch(url : string, index : number) : void {
 
   const request : any = new XMLHttpRequest();
   request.open("GET", url, true);
@@ -801,7 +799,7 @@ function get_asynch(url, index) {
 //     LoadShaders()
 //
 
-function LoadShaders() {
+function LoadShaders() : void {
 
   get_asynch("shaders/rectangles.vert", 0);
   get_asynch("shaders/rectangles.frag", 1);
@@ -819,10 +817,10 @@ function LoadShaders() {
 //     main5
 //
 
-function main5() {
+function main5() : void {
 
   // Get A WebGL context
-  canvas = document.getElementById("c");
+  canvas = <HTMLCanvasElement> document.getElementById("c");
 
   gl = canvas.getContext("webgl2");
   if (!gl) {
@@ -851,7 +849,7 @@ function main5() {
 //     write_rectangle
 //
 
-function write_rectangle(f, iOffset, x1, y1, x2, y2, color)
+function write_rectangle(f : Float32Array, iOffset : number, x1 : number, y1 : number, x2 : number, y2 : number, color : number) : void
 {
 
   f[iOffset + 0] = x1;
@@ -884,7 +882,7 @@ function write_rectangle(f, iOffset, x1, y1, x2, y2, color)
 //     get_x_from_time
 //
 
-function get_x_from_time(w, time)
+function get_x_from_time(w : number, time: number) : number
 {
   var start_time = (1995 - 1970) * 365.242199;
   var end_time = (2018 - 1970) * 365.242199;
@@ -899,7 +897,7 @@ function get_x_from_time(w, time)
 //     build_interval_rectangle
 //
 
-function build_bar_rectangle(f, iOffset, begin, end, color, w)
+function build_bar_rectangle(f : Float32Array, iOffset : number, begin : number, end : number, color : number, w : number) : void
 {
   var x1 = get_x_from_time(w, begin);
   var x2 = get_x_from_time(w, end);
@@ -915,7 +913,7 @@ function build_bar_rectangle(f, iOffset, begin, end, color, w)
 //     build_interval_rectangle
 //
 
-function build_interval_rectangle(f, iOffset, id, begin, end, color, w)
+function build_interval_rectangle(f : Float32Array, iOffset : number, id : number, begin : number, end : number, color : number, w: number) : void
 {
   var x1 = get_x_from_time(w, begin);
   var x2 = get_x_from_time(w, end);
@@ -932,7 +930,7 @@ function build_interval_rectangle(f, iOffset, id, begin, end, color, w)
 //     resize
 //
 
-function resize(canvas) {
+function resize(canvas: HTMLCanvasElement) : void {
   // Lookup the size the browser is displaying the canvas.
   var displayWidth = canvas.clientWidth;
   var displayHeight = canvas.clientHeight;
@@ -953,7 +951,7 @@ function resize(canvas) {
 //     get_row_min
 //
 
-function get_row_min() {
+function get_row_min() : number {
 
   var
     rOffsetYScaled = getOffsetY();
@@ -979,7 +977,7 @@ function get_row_min() {
 //     get_row_max
 //
 
-function get_row_max() {
+function get_row_max() : number {
 
   var
     rOffsetYScaled = getOffsetY();
@@ -1004,10 +1002,7 @@ function get_row_max() {
 //     render_radar
 //
 
-function render_radar() {
-
-  // Change buffer:
-
+function render_radar() : void {
 
   var
     nRows = getNumberOfPersons();
@@ -1049,9 +1044,7 @@ function render_radar() {
   gl.bindVertexArray(vao_radar);
 
   gl.drawArrays(gl.TRIANGLES, 0, 12);
-
 }
-
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -1059,16 +1052,16 @@ function render_radar() {
 //     render_text
 //
 
-function render_text() {
+function render_text() : void {
 
   gl.useProgram(program_text);
   gl.bindVertexArray(vao_text);
 
-  var x = gl.canvas.width;
-  var y = gl.canvas.height;
+  const x : number = gl.canvas.width;
+  const y : number = gl.canvas.height;
 
-  var resolution_x = 1600.0; //  * (x / 1600);
-  var resolution_y = 1024.0; //  * (y / 1600);
+  const resolution_x : number = 1600.0; //  * (x / 1600);
+  const resolution_y : number = 1024.0; //  * (y / 1600);
 
   gl.uniform2f(textResolutionUniformLocation, resolution_x, resolution_y);
 
@@ -1084,52 +1077,52 @@ function render_text() {
 //     render_rectangles
 //
 
-function render_rectangles() {
+function render_rectangles() : void {
 
   gl.useProgram(program_rect);
 
   // Bind the attribute/buffer set we want.
   gl.bindVertexArray(vao_rectangles);
 
-  var
-    x_factor = gl.canvas.width / W;
+  const
+    x_factor : number = gl.canvas.width / W;
 
-  var
-    y = getOffsetY();
+  const
+    y : number = getOffsetY();
 
   gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
   gl.uniform2f(contentsizeUniformLocation, x_factor, 1);
   gl.uniform2f(offsetLocation, 0, -y);
   gl.uniform1f(y_scaleLocation, y_scale);
 
-  var count = nRectangleCount * 6;
+  let count : number = nRectangleCount * 6;
   
   if (isYearLines) {
     gl.drawArrays(gl.TRIANGLES, 0, 6 * getNumberOfYearLines());
   }
 
-  var offset = 6 * getNumberOfYearLines();
+  let offset : number = 6 * getNumberOfYearLines();
 
   count -= offset;
   
-  var
-    row0 = get_row_min();
+  const
+    row0 : number = get_row_min();
 
-  var
-    row1 = get_row_max();
+  const
+    row1 : number = get_row_max();
 
-  var
-    offset0 = person_offset[row0];
+  const
+    offset0 : number = person_offset[row0];
 
-  var
-    offset1 = person_offset[row1];
+  const
+    offset1 : number = person_offset[row1];
 
   if (offset0 > count)
   {
     return;
   }
 
-  var
+  let
     newCount = offset1 - offset0;
 
   if (offset0 + newCount > count)
@@ -1146,7 +1139,7 @@ function render_rectangles() {
 //     render
 //
 
-function render() {
+function render() : void {
 
   resize(gl.canvas);
 
@@ -1173,7 +1166,10 @@ function render() {
 //     resizeEventHandler
 //
 
-function resizeEventHandler(event) {
+function resizeEventHandler(event : any) : void {
+
+  event;
+
   requestAnimationFrame(render);
 }
 
@@ -1183,7 +1179,7 @@ function resizeEventHandler(event) {
 //     logCanvasSize
 //
 
-function logCanvasSize()
+function logCanvasSize() : void
 {
   var x = gl.canvas.width;
   var y = gl.canvas.height;
@@ -1191,13 +1187,13 @@ function logCanvasSize()
   console.log('gl.canvas size = (' + x + ',' + y + ')');
 }
 
-var isDragging = false;
+let isDragging : boolean= false;
 
-var x_down;
-var y_down;
+let x_down : number;
+let y_down : number;
 
-var x_current;
-var y_current;
+let x_current : number;
+let y_current : number;
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -1205,7 +1201,7 @@ var y_current;
 //     handleMouseUp
 //
 
-function handleMouseUp(event) {
+function handleMouseUp(event : any) : void {
 
   if (event.button != 0) {
     return;
@@ -1227,7 +1223,7 @@ function handleMouseUp(event) {
 //     getOffsetY
 //
 
-function getOffsetY()
+function getOffsetY() : number 
 {
   if (isDragging) {
     return (offsetY + (y_current - y_down))/ y_scale;
@@ -1243,13 +1239,12 @@ function getOffsetY()
 //     handleMouseMove
 //
 
-function handleMouseMove(event) {
+function handleMouseMove(event : any) : void{
 
-  var rect = canvas.getBoundingClientRect();
+  const rect : ClientRect = canvas.getBoundingClientRect();
 
-  x_current = event.clientX - rect.left;
-  y_current = event.clientY - rect.top;
- 
+  const x_current : number = event.clientX - rect.left;
+  const y_current : number = event.clientY - rect.top;
 
   if (isDragging)
   {
@@ -1263,18 +1258,18 @@ function handleMouseMove(event) {
 //     trace
 //
 
-function trace(y_mouse) {
+function trace(y_mouse : number) : void {
 
   console.log('trace at y=' + y_mouse);
 
-  var
-    screen_y = y_mouse;
+  const
+    screen_y : number = y_mouse;
 
-  var
-    content_y = (screen_y - offsetY) / y_scale;
+  const
+    content_y : number = (screen_y - offsetY) / y_scale;
 
-  var
-    row = content_y / row_size;
+  const
+    row : number = content_y / row_size;
 
  
   console.log('trace at screen y =' + screen_y + ' gives row = ' + row);
@@ -1286,14 +1281,14 @@ function trace(y_mouse) {
 //     handleMouseDown
 //
 
-function handleMouseDown(event) {
+function handleMouseDown(event : any) : void {
 
   if (event.button != 0)
   {
     return;
   }
 
-  var rect = canvas.getBoundingClientRect();
+  const rect : ClientRect = canvas.getBoundingClientRect();
 
   isDragging = true;
 
@@ -1307,14 +1302,13 @@ function handleMouseDown(event) {
 
   logCanvasSize();
 
-
   // Display height extent in world space:
 
-  var
-    row0_new = get_row_min();
+  const
+    row0_new : number = get_row_min();
 
-  var
-    row1_new = get_row_max();
+  const
+    row1_new : number = get_row_max();
 
   console.log('Rows on display2: [' + row0_new + ',' + row1_new + ']');
 
@@ -1328,12 +1322,13 @@ function handleMouseDown(event) {
 //     animate_y_offset
 //
 
-function animate_y_offset() {
+function animate_y_offset() : void {
 
-  var diff = getOffsetY() - offsetY_anim;
+  let
+    diff : number = getOffsetY() - offsetY_anim;
   
-  var
-    N = 7;
+  const
+    N : number = 7;
 
   diff = (N - 1) * diff / N;
 
@@ -1352,10 +1347,10 @@ function animate_y_offset() {
 //     set_y_scale_and_adjust_offset
 //
 
-function set_y_scale_and_adjust_offset(y_scale_new, y_mouse) {
+function set_y_scale_and_adjust_offset(y_scale_new : number, y_mouse : number) : void {
 
-  var
-    content_y0 = (y_mouse - offsetY) / y_scale;
+  const
+    content_y0 : number = (y_mouse - offsetY) / y_scale;
 
   y_scale = y_scale_new;
   
@@ -1364,8 +1359,8 @@ function set_y_scale_and_adjust_offset(y_scale_new, y_mouse) {
   // console.log('set_y_scale_and_adjust_offset. scale = ' + y_scale);
 }
 
-var y_scale_optimal = 0;
-var y_scale_optimal_mouse = 0;
+let y_scale_optimal : number = 0;
+let y_scale_optimal_mouse : number = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -1373,8 +1368,7 @@ var y_scale_optimal_mouse = 0;
 //     animate_y_end_and_stop
 //
 
-function animate_y_end_and_stop()
-{
+function animate_y_end_and_stop() : void {
   if (y_scale_optimal == 0) {
     return;
   }
@@ -1389,23 +1383,22 @@ function animate_y_end_and_stop()
 //     animate_y_scale
 //
 
-function animate_y_scale()
-{
+function animate_y_scale() : void {
   if (y_scale_optimal == 0)
   {
     return;
   }
 
-  var
-    y_diff = y_scale - y_scale_optimal;
+  let
+    y_diff : number = y_scale - y_scale_optimal;
 
-  var
-    N = 7;
+  const
+    N : number = 7;
 
   y_diff = (N-1) * y_diff / N;
 
-  var
-    y_scale_new = y_diff + y_scale_optimal;
+  const
+    y_scale_new : number = y_diff + y_scale_optimal;
 
   if (Math.abs(y_diff) < 0.005)
   {
@@ -1425,18 +1418,17 @@ function animate_y_scale()
 //     handleMouseWheel
 //
 
-function handleMouseWheel(event) {
+function handleMouseWheel(event : any) : void {
 
-  var rect = canvas.getBoundingClientRect();
+  const rect : ClientRect = canvas.getBoundingClientRect();
 
-  var y_mouse = event.clientY - rect.top;
+  const y_mouse : number = event.clientY - rect.top;
 
-  var d = event.wheelDelta;
+  const d : number = event.wheelDelta;
  
-  var y_scale_new;
+  let y_scale_new : number;
 
-
-  var y_scale_current = (y_scale_optimal == 0) ? y_scale : y_scale_optimal;
+  const y_scale_current : number = (y_scale_optimal == 0) ? y_scale : y_scale_optimal;
 
   if (d > 0) {
     y_scale_new = y_scale_current * 1.1;
@@ -1456,12 +1448,12 @@ function handleMouseWheel(event) {
 //
 // Fill the buffer with the values that define a rectangle.
 
-function setRectangle(gl, x, y, width, height, c) {
+function setRectangle(gl : any, x : number, y : number, width : number, height : number, c : number) : void {
 
-  var x1 = x;
-  var x2 = x + width;
-  var y1 = y;
-  var y2 = y + height;
+  const x1 : number = x;
+  const x2 : number = x + width;
+  const y1 : number = y;
+  const y2 : number = y + height;
 
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
     x1, y1, c,
