@@ -49,7 +49,7 @@ static createProgram(gl : any, vertexShader : any, fragmentShader: any) : number
 //     GetUniformLocation
 //
 
-static GetUniformLocation(p : number, name : string, isWarn : boolean) : number
+static GetUniformLocation(gl : any, p : number, name : string, isWarn : boolean) : number
 {
   var
     location = gl.getUniformLocation(p, name);

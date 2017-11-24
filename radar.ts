@@ -14,9 +14,14 @@ class Radar {
     gl : any;
 
     constructor(gl : any) {
-
         this.gl = gl;
     }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    //     setup
+    //
 
     render(nRows : number, nFirstRow : number, nLastRow: number) : void {
         
@@ -36,7 +41,7 @@ class Radar {
             yBottom = nearTop - showingSize;
     
     
-        gl.bindBuffer(gl.ARRAY_BUFFER, radarBuffer);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
     
         let f_data = this.f_data;
     
@@ -48,12 +53,12 @@ class Radar {
         f_data[19] = yTop;
         f_data[23] = yTop;
     
-        gl.bufferSubData(gl.ARRAY_BUFFER, 0, f_data, 0, f_radar.length);
+        this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, f_data, 0, this.f_data.length);
     
-        gl.useProgram(program_radar);
-        gl.bindVertexArray(vao_radar);
+        this.gl.useProgram(this.program);
+        this.gl.bindVertexArray(this.vao);
     
-        gl.drawArrays(gl.TRIANGLES, 0, 12);
+        this.gl.drawArrays(this.gl.TRIANGLES, 0, 12);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -63,16 +68,16 @@ class Radar {
 
     setup(vertex_source : string, fragment_source : string) : void {
     
-      const vertexShader : any = gl_utils.createShader(gl, gl.VERTEX_SHADER, vertex_source);
-      const fragmentShader : any = gl_utils.createShader(gl, gl.FRAGMENT_SHADER, fragment_source);
+      const vertexShader : any = gl_utils.createShader(this.gl, this.gl.VERTEX_SHADER, vertex_source);
+      const fragmentShader : any = gl_utils.createShader(this.gl, this.gl.FRAGMENT_SHADER, fragment_source);
     
-      this.program = gl_utils.createProgram(gl, vertexShader, fragmentShader);
+      this.program = gl_utils.createProgram(this.gl, vertexShader, fragmentShader);
     
-      this.posAttribLocation = gl.getAttribLocation(program_radar, "radar_position");
+      this.posAttribLocation = this.gl.getAttribLocation(this.program, "radar_position");
     
-      this.buffer = gl.createBuffer();
+      this.buffer = this.gl.createBuffer();
     
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
     
       const
         x0 : number = -0.99,
@@ -117,21 +122,20 @@ class Radar {
       
       this.f_data = new Float32Array(positions);
     
-      gl.bufferData(gl.ARRAY_BUFFER, this.f_data, gl.DYNAMIC_DRAW);
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, this.f_data, this.gl.DYNAMIC_DRAW);
     
-      
-      this.vao = gl.createVertexArray();
+      this.vao = this.gl.createVertexArray();
     
-      gl.bindVertexArray(this.vao);
+      this.gl.bindVertexArray(this.vao);
     
-      gl.enableVertexAttribArray(this.posAttribLocation);
+      this.gl.enableVertexAttribArray(this.posAttribLocation);
     
       const size : any = 2;          // 2 components per iteration
-      const type : any = gl.FLOAT;   // the data is 32bit floats
+      const type : any = this.gl.FLOAT;   // the data is 32bit floats
       const normalize : any = false; // don't normalize the data
       const stride : any = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
       const offset : any = 0;        // start at the beginning of the buffer
-      gl.vertexAttribPointer(this.posAttribLocation, size, type, normalize, stride, offset);
+      this.gl.vertexAttribPointer(this.posAttribLocation, size, type, normalize, stride, offset);
     
     }
     

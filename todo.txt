@@ -3,7 +3,6 @@
 TOOL
 ----
 
-* Convert to typescript.
 
 * Full text support.
 
