@@ -22,6 +22,67 @@ let text_renderer : TextRenderer;
 let rectangles : Rectangles;
 
 
+let g_node1 : Text;
+let g_node2 : Text;
+let g_node3 : Text;
+
+let time : number = 0;
+let time_delta : number = 1;
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     g_renderHTML
+//
+
+function g_renderHTML() {
+
+  time += time_delta;
+  
+  let nPersons : number = rectangles.getNumberOfPersons();
+
+  let nRows : number = viewport.get_row_max() - viewport.get_row_min();
+
+  let
+    value1 : string = nPersons.toFixed(0),
+    value2 : string = time.toFixed(0),
+    value3 : string = nRows.toFixed(0);
+
+  g_node1.nodeValue = value1;
+  g_node2.nodeValue = value2;
+  g_node3.nodeValue = value3;
+  
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     g_setupHTML
+//
+
+function g_setupHTML() {
+
+  let element1 : HTMLElement | null  = document.getElementById("var1");
+  let element2 : HTMLElement | null = document.getElementById("var2");
+  let element3 : HTMLElement | null = document.getElementById("var3");
+
+  g_node1 = document.createTextNode("");
+  g_node2 = document.createTextNode("");
+  g_node3 = document.createTextNode("");
+
+  if (element1 != null) {
+    element1.appendChild(g_node1);
+  }
+
+  if (element2 != null) {
+    element2.appendChild(g_node2);
+  }
+
+  if (element3 != null) {
+    element3.appendChild(g_node3);
+  }
+  
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 //     transferComplete
@@ -181,6 +242,8 @@ function LoadShaders() : void {
 
 function main5() : void {
 
+
+  g_setupHTML();
   // Get A WebGL context
 
   let canvas : HTMLCanvasElement = <HTMLCanvasElement> document.getElementById("c");
@@ -215,6 +278,9 @@ function main5() : void {
 //
 
 function g_render() : void {
+
+  g_renderHTML();
+
 
   viewport.resize();
   viewport.animate();

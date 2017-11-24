@@ -13,17 +13,43 @@
         canvas {
             margin: 0 auto;
             width: 98vw;
-            height: 95vh;
+            height: 97vh;
             display: block;
         }
-       
+
+        .container {
+            position: relative;
+        }
+        #overlay {
+            position: absolute;
+            left: 40px;
+            top: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-family: monospace;
+            padding: 1em;
+            border-radius: 1em;
+            border: 2px solid #f00;
+            text-shadow: 0px 0px 5px white;
+        }
+
+
     </style>
     
 </head>
 
 <body>
-        <canvas id="c"></canvas>
+        <div class="container">
+            <canvas id="c"></canvas>
+            <div id="overlay">
+              <div>P# <span id="var1"></span></div>
+              <div>Frame# <span id="var2"></span></div>
+              <div>Row# <span id="var3"></span></div>
+            </div>
+          </div>
 </body>
+
+
 </html>
 
 <script src="logger.js"></script>
