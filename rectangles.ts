@@ -69,6 +69,8 @@ class Rectangles {
     f[iOffset + 16] = y2;
     f[iOffset + 17] = color;
     }
+    
+    
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
@@ -77,13 +79,13 @@ class Rectangles {
 
     build_bar_rectangle(f : Float32Array, iOffset : number, begin : number, end : number, color : number, w : number) : void
     {
-    var x1 = get_x_from_time(w, begin);
-    var x2 = get_x_from_time(w, end);
+        var x1 = gl_utils.get_x_from_time(w, begin);
+        var x2 = gl_utils.get_x_from_time(w, end);
 
-    var y1 = 0 * this.row_size;
-    var y2 = 5000 * this.row_size;
+        var y1 = 0 * this.row_size;
+        var y2 = 5000 * this.row_size;
 
-    this.write_rectangle(f, iOffset, x1, y1, x2, y2, color);
+        this.write_rectangle(f, iOffset, x1, y1, x2, y2, color);
     }
     ///////////////////////////////////////////////////////////////////////////////////////
     //
@@ -92,9 +94,8 @@ class Rectangles {
 
     build_interval_rectangle(f : Float32Array, iOffset : number, id : number, begin : number, end : number, color : number, w: number) : void
     {
-        var x1 = get_x_from_time(w, begin);
-        var x2 = get_x_from_time(w, end);
-
+        var x1 = gl_utils.get_x_from_time(w, begin);
+        var x2 = gl_utils.get_x_from_time(w, end);
 
         var y1 = id * this.row_size;
         var y2 = y1 + this.rectangle_thickness;
@@ -124,7 +125,7 @@ class Rectangles {
     
       let cpu_data : Float32Array = new Float32Array(nPrimitives * nElementsPerRectangle);
     
-      this.person_offset = new Int32Array(getNumberOfPersons());
+      this.person_offset = new Int32Array(this.getNumberOfPersons());
     
       let
         iOffset : number = 0;
@@ -236,6 +237,24 @@ class Rectangles {
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
+    //     getNumberOfYearLines
+    //
+
+    getNumberOfYearLines() : number
+    {
+        let
+        nYearLines : number = 0;
+    
+        for (var iYear = 1996; iYear < 2018; iYear++) {
+        nYearLines++;
+        }
+    
+        return nYearLines;
+    
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
     //     getNumberOfRectangles
     //
 
@@ -246,7 +265,7 @@ class Rectangles {
 
         // Year bars
 
-        nRectangles += getNumberOfYearLines();
+        nRectangles += this.getNumberOfYearLines();
     
         // Intervals
 
@@ -275,7 +294,7 @@ class Rectangles {
     //     setup
     //
 
-    setup(vertex_source : string, fragment_source : string, row_size : number, json_raw :  any[], nMaxChunk : number) : void
+    setup(vertex_source : string, fragment_source : string, row_size : number, json_raw :  any[], nMaxChunk : number, world_width : number) : void
     {
 
         this.nMaxChunk = nMaxChunk;
@@ -300,7 +319,7 @@ class Rectangles {
 
         this.buffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
-        this.buildGLFromData(WORLD_WIDTH);
+        this.buildGLFromData(world_width);
 
 
         // Create a vertex array object (attribute state)
@@ -329,7 +348,7 @@ class Rectangles {
     //     render
     //
 
-    render(y : number, y_scale : number, isYearLines : boolean, x_factor : number) : void {
+    render(y : number, y_scale : number, row0: number, row1 : number, isYearLines : boolean, x_factor : number) : void {
     
       this.gl.useProgram(this.program);
     
@@ -344,18 +363,14 @@ class Rectangles {
       let count : number = this.nRectangleCount * 6;
       
       if (isYearLines) {
-        this.gl.drawArrays(this.gl.TRIANGLES, 0, 6 * getNumberOfYearLines());
+        this.gl.drawArrays(this.gl.TRIANGLES, 0, 6 * this.getNumberOfYearLines());
       }
     
-      let offset : number = 6 * getNumberOfYearLines();
+      let offset : number = 6 * this.getNumberOfYearLines();
     
       count -= offset;
       
-      const
-        row0 : number = get_row_min();
-    
-      const
-        row1 : number = get_row_max();
+      
     
       const
         offset0 : number = this.person_offset[row0];

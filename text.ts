@@ -44,6 +44,64 @@ class TextRenderer {
     
         this.gl.drawArrays(this.gl.TRIANGLES, 0, this.nRectangleCount * 6);  // 6 vertices for one rectangle.
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+//
+//     addTextTriangles
+//
+
+addTextTriangles(f : Float32Array, offset : number, x0 : number, y0 : number, x1 : number, y1 : number)
+{
+  f[offset + 0] = x0;
+  f[offset + 1] = y0;
+
+  f[offset + 2] = x1;
+  f[offset + 3] = y0;
+
+  f[offset + 4] = x0;
+  f[offset + 5] = y1;
+
+  f[offset + 6] = x0;
+  f[offset + 7] = y1;
+
+  f[offset + 8] = x1;
+  f[offset + 9] = y0;
+
+  f[offset + 10] = x1;
+  f[offset + 11] = y1;
+
+  return offset + 12;
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     addTextTextureCoords
+//
+
+addTextTextureCoords(g : Float32Array, offset : number, u_min : number, v_min : number, u_max : number, v_max : number)
+{
+
+  g[offset + 0] = u_min;
+  g[offset + 1] = v_min;
+
+  g[offset + 2] = u_max;
+  g[offset + 3] = v_min;
+
+  g[offset + 4] = u_min;
+  g[offset + 5] = v_max;
+
+  g[offset + 6] = u_min;
+  g[offset + 7] = v_max;
+
+  g[offset + 8] = u_max;
+  g[offset + 9] = v_min;
+
+  g[offset + 10] = u_max;
+  g[offset + 11] = v_max;
+
+  return offset + 12;
+}
     
     ///////////////////////////////////////////////////////////////////////////////////////
     //
@@ -101,13 +159,13 @@ class TextRenderer {
           v_max : number = (iPart + 1) / imageParts;
     
         const
-          x0 : number = get_x_from_time(1600, time),
+          x0 : number = gl_utils.get_x_from_time(1600, time),
           y0 : number = 100,
           x1 : number = x0 + image_w,
           y1 : number = y0 + image_h / imageParts;
     
-        gOffset = addTextTextureCoords(g, gOffset, u_min, v_min, u_max, v_max);
-        fOffset = addTextTriangles(f, fOffset, x0, y0, x1, y1);
+        gOffset = this.addTextTextureCoords(g, gOffset, u_min, v_min, u_max, v_max);
+        fOffset = this.addTextTriangles(f, fOffset, x0, y0, x1, y1);
     
     /*
         x0 = get_x_from_time(1600, time),

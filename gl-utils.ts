@@ -61,7 +61,21 @@ static GetUniformLocation(gl : any, p : number, name : string, isWarn : boolean)
 
   return location;
 }
-  
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     get_x_from_time
+//
+
+static get_x_from_time(w : number, time: number) : number
+{
+  var start_time = (1995 - 1970) * 365.242199;
+  var end_time = (2018 - 1970) * 365.242199;
+
+  var a = w / (end_time - start_time);
+
+  return a * (time - start_time);
+}  
 
 
 };
