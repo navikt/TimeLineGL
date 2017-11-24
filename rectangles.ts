@@ -22,7 +22,6 @@ class Rectangles {
 
     person_offset : Int32Array;
 
-
     nMaxChunk : number;
     json_raw : any[] = [];
 
@@ -162,7 +161,7 @@ class Rectangles {
         let
           i : any = this.json_raw[iChunk];
     
-        console.log("Elements found : " + i.length);
+        Logger.log(1, "Elements found : " + i.length);
     
         for (let iPerson : number = 0; iPerson < i.length; iPerson++) {
     

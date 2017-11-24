@@ -37,7 +37,7 @@ class ViewPort {
         canvas.onmousemove = this.handleMouseMove;
         canvas.onmousewheel = this.handleMouseWheel;
 
-        window.addEventListener("'resize", this.resizeEventHandler, false);
+        window.addEventListener("resize", this.resizeEventHandler, false);
 
         this.cbRender = cbRender;
     }
@@ -47,7 +47,7 @@ class ViewPort {
     //     resizeEventHandler
     //
 
-    resizeEventHandler(event : any): void {
+    resizeEventHandler = (event: any) => {
 
         if (event) {
             let a : number = 1;
@@ -64,9 +64,8 @@ class ViewPort {
         let x: number = this.canvas.width;
         let y: number = this.canvas.height;
 
-        console.log("'gl.canvas size = (" + x + "'," + y + ")");
+        Logger.log(1, "'gl.canvas size = (" + x + "'," + y + ")");
     }
-
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
@@ -75,7 +74,7 @@ class ViewPort {
 
     trace(y_mouse : number): void {
 
-        console.log("trace at y = " + y_mouse);
+        Logger.log(1, "trace at y = " + y_mouse);
 
         const
             screen_y : number = y_mouse;
@@ -86,7 +85,7 @@ class ViewPort {
         const
             row : number = content_y / this.row_size;
 
-        console.log("'trace at screen y = " + screen_y + "' gives row = " + row);
+            Logger.log(1, "'trace at screen y = " + screen_y + "' gives row = " + row);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -105,7 +104,7 @@ class ViewPort {
         this.offsetX += (this.x_current - this.x_down);
         this.offsetY += (this.y_current - this.y_down);
 
-        console.log("'handleMouseUp delta (" + (this.x_current - this.x_down) + "'," + (this.y_current - this.y_down) + "')");
+        Logger.log(1, "'handleMouseUp delta (" + (this.x_current - this.x_down) + "'," + (this.y_current - this.y_down) + "')");
 
         requestAnimationFrame(this.cbRender);
     }
@@ -160,8 +159,8 @@ class ViewPort {
       const
         row1_new : number = this.get_row_max();
 
-      console.log("'Rows on display2: [" + row0_new + "," + row1_new + "]");
-      console.log("'handleMouseDown at " + this.x_down + "," + this.y_down + ")");
+      Logger.log(1, "'Rows on display2: [" + row0_new + "," + row1_new + "]");
+      Logger.log(1, "'handleMouseDown at " + this.x_down + "," + this.y_down + ")");
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////

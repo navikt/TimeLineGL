@@ -31,7 +31,7 @@ function transferComplete(evt:any) {
 
     evt;
 
-    console.log("The transfer is complete for loading# " + g_loading_state);
+    Logger.log(1, "The transfer is complete for loading# " + g_loading_state);
 
     g_json_raw[g_loading_state] = JSON.parse(g_xmlhttp.response);
 
@@ -92,12 +92,12 @@ function LoadData() {
 
 function loadImage() : void {
 
-  console.log("Loading image...");
+  Logger.log(1, "Loading image...");
 
   g_text_image = new Image();
   g_text_image.src = "y2.jpg";
   g_text_image.onload = function () {
-    console.log("Image has been loaded (" + g_text_image.width + "," + g_text_image.height + ")");
+    Logger.log(1, "Image has been loaded (" + g_text_image.width + "," + g_text_image.height + ")");
     main2();
   }
 }
@@ -130,7 +130,7 @@ function signal_loaded() : void
   g_nCompleted++;
 
   if (g_nCompleted == 6) {
-    console.log("All loaded");
+    Logger.log(1, "All loaded");
     main5();
   }
 }
@@ -149,7 +149,7 @@ function get_asynch(url : string, index : number) : void {
 
     g_shader_source[index] = this.responseText;
 
-    console.log("Loaded OK: " + url);
+    Logger.log(1, "Loaded OK: " + url);
 
     signal_loaded();
   };
@@ -235,27 +235,20 @@ function g_render() : void {
     y : number = viewport.getOffsetY();
 
   const
-    row0 : number = viewport.get_row_min();
+    nFirstRow : number = viewport.get_row_min();
 
   const
-    row1 : number = viewport.get_row_max();
+    nLastRow: number = viewport.get_row_max();
 
-  rectangles.render(y, viewport.y_scale, row0, row1, g_isYearLines, x_factor);
+  rectangles.render(y, viewport.y_scale, nFirstRow, nLastRow, g_isYearLines, x_factor);
 
   text_renderer.render();
 
   var
     nRows = rectangles.getNumberOfPersons();
 
-  var
-    nFirstRow = viewport.get_row_min();
-
-  var
-    nLastRow = viewport.get_row_max();
-
   radar.render(nRows, nFirstRow, nLastRow);
-  
+ 
 }
 
 main();
-
