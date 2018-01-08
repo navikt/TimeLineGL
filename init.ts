@@ -18,6 +18,9 @@ let g_nCompleted : number = 0;
 let viewport : ViewPort;
 
 let radar : Radar;
+
+let detail : Detail;
+
 let text_renderer : TextRenderer;
 let rectangles : Rectangles;
 
@@ -188,7 +191,7 @@ function main2(): void {
 function signal_loaded(): void {
   g_nCompleted++;
 
-  if (g_nCompleted === 6) {
+  if (g_nCompleted === 8) {
     Logger.log(1, "All loaded");
     main5();
   }
@@ -231,6 +234,9 @@ function loadShaders(): void {
 
   get_asynch("shaders/radar.vert", 4);
   get_asynch("shaders/radar.frag", 5);
+
+  get_asynch("shaders/detail.vert", 6);
+  get_asynch("shaders/detail.frag", 7);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -259,8 +265,11 @@ function main5(): void {
 
   rectangles = new Rectangles(g_gl);
 
+  detail = new Detail(g_gl);
 
   radar.setup(g_shader_source[4], g_shader_source[5]);
+
+  detail.setup(g_shader_source[6], g_shader_source[7]);
 
   text_renderer.setup(g_text_image, g_shader_source[2], g_shader_source[3]);
 
@@ -311,6 +320,11 @@ function g_render(): void {
     nRows : number = rectangles.getNumberOfPersons();
 
   radar.render(nRows, nFirstRow, nLastRow);
+
+  const
+    mouse_y : number = viewport.getCurrentY();
+
+  detail.render(mouse_y);
 
 }
 

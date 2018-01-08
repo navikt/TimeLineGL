@@ -8,19 +8,20 @@ class GLUtils {
 //     createShader
 //
 
-static createShader(gl : any, type : any, source : string): number {
+static createShader(gl : any, type : any, source : string): number | null {
     let shader : any = gl.createShader(type);
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
     let success : number = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-    if (success !== 0) {
-    return shader;
+    if (success) {
+      return shader;
     }
 
     console.log(gl.getShaderInfoLog(shader));
     gl.deleteShader(shader);
 
-    return -1;
+    return null;
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////

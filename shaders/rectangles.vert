@@ -6,6 +6,8 @@ in vec3 a_position;
 
 out float colorValue;
 
+out float alphaValue;
+
 // Resolution of canvas
 uniform vec2 u_resolution;
 
@@ -35,5 +37,19 @@ void main() {
 
   gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
 
+/*
+  if (a_position.x > 0.3 || a_position.x < -0.3)
+  {
+    colorValue = 0.0;
+  }
+  else
+  {
+    colorValue = a_position.z;
+  }
+*/  
   colorValue = a_position.z;
+
+
+  alphaValue = 1.0 - gl_Position.y * gl_Position.y;
+
 }

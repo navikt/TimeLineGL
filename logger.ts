@@ -3,7 +3,7 @@
 class Logger {
 
     static log (pri: number, text: string): void {
-        if (pri >= 2 ) {
+        if (pri >= 0 ) {
             console.log(text);
         }
     }
