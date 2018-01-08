@@ -35,15 +35,15 @@ let time_delta : number = 1;
 //     g_renderHTML
 //
 
-function g_renderHTML() {
+function g_renderHTML(): void {
 
   time += time_delta;
-  
-  let nPersons : number = rectangles.getNumberOfPersons();
 
-  let nRows : number = viewport.get_row_max() - viewport.get_row_min();
+  const nPersons : number = rectangles.getNumberOfPersons();
 
-  let
+  const nRows : number = viewport.get_row_max() - viewport.get_row_min();
+
+  const
     value1 : string = nPersons.toFixed(0),
     value2 : string = time.toFixed(0),
     value3 : string = nRows.toFixed(0);
@@ -51,7 +51,7 @@ function g_renderHTML() {
   g_node1.nodeValue = value1;
   g_node2.nodeValue = value2;
   g_node3.nodeValue = value3;
-  
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -59,11 +59,11 @@ function g_renderHTML() {
 //     g_setupHTML
 //
 
-function g_setupHTML() {
+function g_setupHTML(): void {
 
-  let element1 : HTMLElement | null  = document.getElementById("var1");
-  let element2 : HTMLElement | null = document.getElementById("var2");
-  let element3 : HTMLElement | null = document.getElementById("var3");
+  const element1 : HTMLElement | null  = document.getElementById("var1");
+  const element2 : HTMLElement | null  = document.getElementById("var2");
+  const element3 : HTMLElement | null  = document.getElementById("var3");
 
   g_node1 = document.createTextNode("");
   g_node2 = document.createTextNode("");
@@ -80,7 +80,7 @@ function g_setupHTML() {
   if (element3 != null) {
     element3.appendChild(g_node3);
   }
-  
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -88,22 +88,21 @@ function g_setupHTML() {
 //     transferComplete
 //
 
-function transferComplete(evt:any) {
+function transferComplete(evt:any): void {
 
-    evt;
+    if (evt === 323) {
+      Logger.log(1, "unused");
+    }
 
     Logger.log(1, "The transfer is complete for loading# " + g_loading_state);
 
     g_json_raw[g_loading_state] = JSON.parse(g_xmlhttp.response);
 
-    if (g_loading_state < 4)
-    {
+    if (g_loading_state < 4) {
       g_loading_state++;
-      LoadData();
-    }
-    else
-    {
-      LoadShaders();
+      loadData();
+    } else {
+      loadShaders();
     }
 }
 
@@ -112,32 +111,32 @@ function transferComplete(evt:any) {
 //     updateProgress
 //
 
-function updateProgress(oEvent:any) {
-    if (oEvent.lengthComputable) {
-        
-        let percentComplete : number = oEvent.loaded / oEvent.total;
-        // console.log("loading... (" + (100.0 * percentComplete).toPrecision(2) + " %)");
+function updateProgress(oEvent:any): void {
+  if (oEvent.lengthComputable) {
 
-    } else {
-        // console.log("loading...");
-    }
+      let percentComplete : number = oEvent.loaded / oEvent.total;
+      // console.log("loading... (" + (100.0 * percentComplete).toPrecision(2) + " %)");
+
+  } else {
+      // console.log("loading...");
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-//     LoadData
+//     loadData
 //
 
-function LoadData() {
+function loadData(): void {
 
     g_xmlhttp = new XMLHttpRequest();
 
     g_xmlhttp.addEventListener("load", transferComplete);
     g_xmlhttp.addEventListener("progress", updateProgress);
 
-    const data_url : string = "data/data" + g_loading_state + ".json"; 
+    const data_url : string = "data/data" + g_loading_state + ".json";
 
-    g_xmlhttp.onreadystatechange = function () {
+    g_xmlhttp.onreadystatechange = function (): void {
         // console.log("readyState = " + this.readyState + ", status = " + this.status);
     };
 
@@ -151,16 +150,16 @@ function LoadData() {
 //     loadImage
 //
 
-function loadImage() : void {
+function loadImage(): void {
 
   Logger.log(1, "Loading image...");
 
   g_text_image = new Image();
   g_text_image.src = "y2.jpg";
-  g_text_image.onload = function () {
+  g_text_image.onload = function (): void {
     Logger.log(1, "Image has been loaded (" + g_text_image.width + "," + g_text_image.height + ")");
     main2();
-  }
+  };
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -168,7 +167,7 @@ function loadImage() : void {
 //     main
 //
 
-function main() : void {
+function main(): void {
   loadImage();
 }
 
@@ -177,8 +176,8 @@ function main() : void {
 //     main2
 //
 
-function main2() : void {
-  LoadData();
+function main2(): void {
+  loadData();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -186,11 +185,10 @@ function main2() : void {
 //     signal_loaded
 //
 
-function signal_loaded() : void
-{
+function signal_loaded(): void {
   g_nCompleted++;
 
-  if (g_nCompleted == 6) {
+  if (g_nCompleted === 6) {
     Logger.log(1, "All loaded");
     main5();
   }
@@ -201,12 +199,12 @@ function signal_loaded() : void
 //     get_asynch
 //
 
-function get_asynch(url : string, index : number) : void {
+function get_asynch(url : string, index : number): void {
 
   const request : any = new XMLHttpRequest();
   request.open("GET", url, true);
 
-  request.onload = function () {
+  request.onload = function (): void {
 
     g_shader_source[index] = this.responseText;
 
@@ -220,10 +218,10 @@ function get_asynch(url : string, index : number) : void {
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-//     LoadShaders()
+//     loadShaders()
 //
 
-function LoadShaders() : void {
+function loadShaders(): void {
 
   get_asynch("shaders/rectangles.vert", 0);
   get_asynch("shaders/rectangles.frag", 1);
@@ -240,14 +238,13 @@ function LoadShaders() : void {
 //     main5
 //
 
-function main5() : void {
-
+function main5(): void {
 
   g_setupHTML();
-  // Get A WebGL context
+  // get A WebGL context
 
   let canvas : HTMLCanvasElement = <HTMLCanvasElement> document.getElementById("c");
-  
+
   g_gl = canvas.getContext("webgl2");
 
   if (!g_gl) {
@@ -261,14 +258,14 @@ function main5() : void {
   text_renderer = new TextRenderer(g_gl);
 
   rectangles = new Rectangles(g_gl);
- 
+
 
   radar.setup(g_shader_source[4], g_shader_source[5]);
 
   text_renderer.setup(g_text_image, g_shader_source[2], g_shader_source[3]);
 
   rectangles.setup(g_shader_source[0], g_shader_source[1], viewport.row_size, g_json_raw, g_nMaxChunk, viewport.WORLD_WIDTH);
- 
+
   requestAnimationFrame(g_render);
 }
 
@@ -277,15 +274,15 @@ function main5() : void {
 //     g_render
 //
 
-function g_render() : void {
+function g_render(): void {
 
   g_renderHTML();
 
 
   viewport.resize();
   viewport.animate();
-  
-  // Tell WebGL how to convert from clip space to pixels
+
+  // tell WebGL how to convert from clip space to pixels
   g_gl.viewport(0, 0, g_gl.canvas.width, g_gl.canvas.height);
   g_gl.clearColor(0, 0, 0, 0);
   g_gl.clear(g_gl.COLOR_BUFFER_BIT);
@@ -293,7 +290,7 @@ function g_render() : void {
 
   g_gl.enable(g_gl.BLEND);
   g_gl.blendFunc(g_gl.SRC_ALPHA, g_gl.ONE_MINUS_SRC_ALPHA);
-  
+
   const
     x_factor : number = g_gl.canvas.width / viewport.WORLD_WIDTH;
 
@@ -310,11 +307,11 @@ function g_render() : void {
 
   text_renderer.render();
 
-  var
-    nRows = rectangles.getNumberOfPersons();
+  const
+    nRows : number = rectangles.getNumberOfPersons();
 
   radar.render(nRows, nFirstRow, nLastRow);
- 
+
 }
 
 main();
