@@ -133,15 +133,9 @@ class Rectangles {
         const time : number = (iYear - 1970) * 365.242199;
 
         let
-          colorXXX : number = 0.0;
+          color : number = 0.99;
 
-        if (iYear === 2002 || iYear === 2005 || iYear === 2015) {
-          colorXXX = 0.99;
-        } else {
-          colorXXX = 0.4;
-        }
-
-        this.build_bar_rectangle(cpu_data, iOffset, time, time + this.bar_thickness, colorXXX, world_width);
+        this.build_bar_rectangle(cpu_data, iOffset, time, time + this.bar_thickness, color, world_width);
 
         iOffset += nElementsPerRectangle;
 
