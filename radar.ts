@@ -14,35 +14,53 @@ class Detail {
   }
 
 
+  unused(x: number): void {
+    if (x === 1231230) {
+        x = 2123;
+    }
+  }
+
+
+
   ///////////////////////////////////////////////////////////////////////////////////////
   //
   //     render
   //
 
-  render(mouse_y: number): void {
+  render(nFirstRow : number, nLastRow: number): void {
+
+
+    const nRows: number = (nLastRow - nFirstRow) > 1 ? (nLastRow - nFirstRow) : 1;
+
+
+    if (nRows > 20) {
+      return;
+    }
+
+
+    const size_y: number = 1.0/ nRows;
+
 
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
 
-
     const
-      x0 : number = -0.79,
-      y0 : number = mouse_y/ 1000.0,
-      x1 : number =  0.78,
-      y1 : number =   y0 + 0.03;
+      x0 : number = -1,
+      y0 : number = 0 + size_y * 0.9,
+      x1 : number = 1,
+      y1 : number = 0 - size_y * 0.9;
 
     const positions : number[] = [
       x0,  //  0
       y0,  //  1
+
       x1,  //  2
       y0,  //  3
-      x0,  //  4
+
+      x1,  //  4
       y1,  //  5
       x0,  //  6
       y1,  //  7
-      x1,  //  8
-      y0,  //  9
-      x1,  // 10
-      y1  // 11
+
 
     ];
 
@@ -54,7 +72,8 @@ class Detail {
     this.gl.useProgram(this.program);
     this.gl.bindVertexArray(this.vao);
 
-    this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+
+    this.gl.drawArrays(this.gl.LINE_LOOP, 0, 4);
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////
@@ -75,10 +94,10 @@ class Detail {
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
 
     const
-      x0 : number = -0.79,
-      y0 : number = -0.7,
-      x1 : number = -0.78,
-      y1 : number = 0.7;
+      x0 : number = -1,
+      y0 : number = -0.47,
+      x1 : number = 1,
+      y1 : number = -0.48;
 
     const positions : number[] = [
       x0,  //  0
@@ -176,12 +195,12 @@ class Radar {
       f_data[19] = yTop;
       f_data[23] = yTop;
 
-        this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, f_data, 0, this.f_data.length);
+      this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, f_data, 0, this.f_data.length);
 
-        this.gl.useProgram(this.program);
-        this.gl.bindVertexArray(this.vao);
+      this.gl.useProgram(this.program);
+      this.gl.bindVertexArray(this.vao);
 
-        this.gl.drawArrays(this.gl.TRIANGLES, 0, 12);
+      this.gl.drawArrays(this.gl.TRIANGLES, 0, 12);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////

@@ -324,7 +324,7 @@ function g_render(): void {
   const
     mouse_y : number = viewport.getCurrentY();
 
-  detail.render(mouse_y);
+  detail.render(nFirstRow, nLastRow);
 
 }
 
