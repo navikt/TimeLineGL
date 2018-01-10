@@ -5,7 +5,7 @@ let g_gl : any;
 
 let g_text_image : HTMLImageElement;
 
-let g_nMaxChunk : number = 5;
+let is_index1 : boolean = true;
 
 let g_isYearLines : boolean = true;
 
@@ -32,8 +32,29 @@ let g_node3 : Text;
 let time : number = 0;
 let time_delta : number = 1;
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     g_GetMaxChunk
+//
 
-let is_index1 : boolean = true;
+function g_GetMaxChunk(): number {
+  if (is_index1) {
+    return 5;
+  } else {
+    return 7;
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     unused
+//
+
+function unused(x: number): void {
+  if (x === 1231230) {
+      x = 2123;
+  }
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -95,15 +116,15 @@ function g_setupHTML(): void {
 
 function transferComplete(evt:any): void {
 
-    if (evt === 323) {
-      Logger.log(1, "unused");
-    }
+    unused(evt);
 
     Logger.log(1, "The transfer is complete for loading# " + g_loading_state);
 
     g_json_raw[g_loading_state] = JSON.parse(g_xmlhttp.response);
 
-    if (g_loading_state < 4) {
+    const nLoadChunks: number = g_GetMaxChunk();
+
+    if (g_loading_state < (nLoadChunks -1)) {
       g_loading_state++;
       loadData();
     } else {
@@ -139,7 +160,9 @@ function loadData(): void {
     g_xmlhttp.addEventListener("load", transferComplete);
     g_xmlhttp.addEventListener("progress", updateProgress);
 
-    const data_url : string = "data/data" + g_loading_state + ".json";
+    const data_url : string = is_index1? ("data/data" + g_loading_state + ".json"):
+                                         ("data2/data" + g_loading_state + ".json");
+
 
     g_xmlhttp.onreadystatechange = function (): void {
         // console.log("readyState = " + this.readyState + ", status = " + this.status);
@@ -279,7 +302,7 @@ function main5(): void {
 
   text_renderer.setup(g_text_image, g_shader_source[2], g_shader_source[3]);
 
-  rectangles.setup(g_shader_source[0], g_shader_source[1], viewport.row_size, g_json_raw, g_nMaxChunk, viewport.WORLD_WIDTH);
+  rectangles.setup(g_shader_source[0], g_shader_source[1], viewport.row_size, is_index1, g_json_raw, g_GetMaxChunk(), viewport.WORLD_WIDTH);
 
   requestAnimationFrame(g_render);
 }

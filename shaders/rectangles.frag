@@ -23,9 +23,17 @@ void main() {
   {
     outColor = vec4(0, 0, 0, 0.15);
   }
-  else
+  else if (colorValue < 0.92)
   {
     outColor = vec4(0, 0, 0, 0.6);
+  }
+  else if (colorValue < 0.97)
+  {
+    outColor = vec4(0, 0, 0, 0.6);
+  }
+  else
+  {
+    outColor = vec4(1, 0, 0, 0.6);
   }
  
 }

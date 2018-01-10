@@ -25,6 +25,8 @@ class Rectangles {
     nMaxChunk : number;
     json_raw : any[] = [];
 
+    json_mode_old : boolean;
+
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
@@ -79,10 +81,11 @@ class Rectangles {
         const x2 : number = GLUtils.get_x_from_time(w, end);
 
         const y1 : number = 0 * this.row_size;
-        const y2 : number = 5000 * this.row_size;
+        const y2 : number = this.getNumberOfPersons() * this.row_size;
 
         this.write_rectangle(f, iOffset, x1, y1, x2, y2, color);
     }
+
     ///////////////////////////////////////////////////////////////////////////////////////
     //
     //     build_interval_rectangle
@@ -98,6 +101,20 @@ class Rectangles {
       const y2 : number = y1 + this.rectangle_thickness;
 
       this.write_rectangle(f, iOffset, x1, y1, x2, y2, color);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // c  GetRectangleColorFromType
+    //
+
+    GetRectangleColorFromType(type_str: string): number {
+
+      if (type_str === "AA115") {
+        return 0.99;
+      } else {
+        return 0.94;
+      }
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -133,7 +150,7 @@ class Rectangles {
         const time : number = (iYear - 1970) * 365.242199;
 
         let
-          color : number = 0.99;
+          color : number = 0.91;
 
         this.build_bar_rectangle(cpu_data, iOffset, time, time + this.bar_thickness, color, world_width);
 
@@ -142,9 +159,75 @@ class Rectangles {
       }
 
 
-      // intervals
+      if (!this.json_mode_old) {
+        for (let iChunk : number = 0; iChunk < this.nMaxChunk; iChunk++) {
 
-      for (let iChunk : number = 0; iChunk < this.nMaxChunk; iChunk++) {
+          const
+            j : any = this.json_raw[iChunk];
+
+          var keys: any = [];
+
+          for(let k in j) {
+            if (j.hasOwnProperty(k)) {
+              keys.push(k);
+              // code here
+            }
+          }
+
+          const n: number = keys.length;
+
+          for (let iKey : number = 0; iKey < n; iKey++) {
+
+            const id: number = keys[iKey];
+
+            this.person_offset[id] = iOffset / nElementsPerVertex;
+
+            const time0 : number = (1995 - 1970) * 365.242199;
+            const time1 : number = (2018 - 1970) * 365.242199;
+
+            this.build_interval_rectangle(cpu_data, iOffset, id, time0, time1, 0.8, world_width);
+
+            iOffset += nElementsPerRectangle;
+
+            let person: any = j[id];
+            var types: any = [];
+
+            for(let k in person) {
+              if (person.hasOwnProperty(k)) {
+                types.push(k);
+              }
+            }
+
+            for (let type in types) {
+              if (!types.hasOwnProperty(type)) {
+                continue;
+              }
+
+              let acIntervalData: any = person[types[type]];
+
+              const nIntervalData: number = acIntervalData.length;
+
+              // c Logger.log(1, "id=" + id + "type=" + type + "[" + types[type] + "] #intervals = " + nIntervalData/2);
+
+              for (let iIntervalData : number = 0; iIntervalData < nIntervalData; iIntervalData+=2) {
+                const begin: number = acIntervalData[iIntervalData + 0];
+                const end: number =   acIntervalData[iIntervalData + 1];
+
+                const color: number = this.GetRectangleColorFromType(types[type]);
+
+
+                this.build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, world_width);
+
+                iOffset += nElementsPerRectangle;
+
+
+                // c Logger.log(1, "min=" + acIntervalData[iIntervalData + 0] + ", max=" + acIntervalData[iIntervalData +1]);
+              }
+            }
+          }
+        }
+      } else {
+        for (let iChunk : number = 0; iChunk < this.nMaxChunk; iChunk++) {
 
         let
           i : any = this.json_raw[iChunk];
@@ -191,12 +274,10 @@ class Rectangles {
 
             iOffset += nElementsPerRectangle;
           }
-
         }
-
-        this.nRectangleCount = nPrimitives;
       }
-
+    }
+      this.nRectangleCount = nPrimitives;
       this.gl.bufferData(this.gl.ARRAY_BUFFER, cpu_data, this.gl.STATIC_DRAW);
     }
 
@@ -210,12 +291,35 @@ class Rectangles {
       let
         nPersons : number = 0;
 
-      for (let iChunk : number = 0; iChunk < g_nMaxChunk; iChunk++) {
+      if (this.json_mode_old) {
+
+        for (let iChunk : number = 0; iChunk < this.nMaxChunk; iChunk++) {
 
           let
-          i : any = g_json_raw[iChunk];
+            i : any = g_json_raw[iChunk];
 
-          nPersons += i.length;
+            nPersons += i.length;
+        }
+      } else {
+
+        for (let iChunk : number = 0; iChunk < this.nMaxChunk; iChunk++) {
+
+          const
+            j : any = this.json_raw[iChunk];
+
+          var keys: any = [];
+
+          for(let k in j) {
+            if (j.hasOwnProperty(k)) {
+              keys.push(k);
+              // code here
+            }
+          }
+
+          const n: number = keys.length;
+
+          nPersons += n;
+        }
       }
 
       return nPersons;
@@ -253,21 +357,64 @@ class Rectangles {
 
       // intervals
 
-      for (let iChunk : number = 0; iChunk < g_nMaxChunk; iChunk++) {
+      if (this.json_mode_old) {
 
-          let
-          i : any[] = g_json_raw[iChunk];
+        for (let iChunk : number = 0; iChunk < this.nMaxChunk; iChunk++) {
 
-          for (let iPerson : number = 0; iPerson < i.length; iPerson++) {
+            let
+            i : any[] = g_json_raw[iChunk];
 
-          const q : any = i[iPerson];
+            for (let iPerson : number = 0; iPerson < i.length; iPerson++) {
 
-          const nEvents : number = q.E.length;
-          const nAA : number = q.AA.length;
+            const q : any = i[iPerson];
 
-          nRectangles += nEvents;
-          nRectangles += nAA;
+            const nEvents : number = q.E.length;
+            const nAA : number = q.AA.length;
+
+            nRectangles += nEvents;
+            nRectangles += nAA;
+            }
+        }
+
+      } else {
+        for (let iChunk : number = 0; iChunk < this.nMaxChunk; iChunk++) {
+
+          const
+            j : any = this.json_raw[iChunk];
+
+          var keys: any = [];
+
+          for(let k in j) {
+            if (j.hasOwnProperty(k)) {
+              keys.push(k);
+              // code here
+            }
           }
+
+          for (let iKey: number = 0; iKey < keys.length; iKey++) {
+
+            const id: number = keys[iKey];
+
+            let person: any = j[id];
+            var types: any = [];
+
+            for(let k in person) {
+              if (person.hasOwnProperty(k)) {
+                types.push(k);
+              }
+            }
+
+            for (let type in types) {
+              if (!types.hasOwnProperty(type)) {
+                continue;
+              }
+
+              let acIntervalData: any = person[types[type]];
+              const nIntervalData: number = acIntervalData.length;
+              nRectangles += nIntervalData/2;
+            }
+          }
+        }
       }
 
       return nRectangles;
@@ -278,11 +425,12 @@ class Rectangles {
     //     setup
     //
 
-    setup(vertex_source : string, fragment_source : string, row_size : number,
+    setup(vertex_source : string, fragment_source : string, row_size : number, json_mode_old: boolean,
                     json_raw :  any[], nMaxChunk : number, world_width : number): void {
 
         this.nMaxChunk = nMaxChunk;
         this.json_raw = json_raw;
+        this.json_mode_old = json_mode_old;
 
         this.row_size = row_size;
 
