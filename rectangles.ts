@@ -77,13 +77,22 @@ class Rectangles {
 
     build_bar_rectangle(f : Float32Array, iOffset : number, begin : number, end : number, color : number, w : number): void {
 
-        const x1 : number = GLUtils.get_x_from_time(w, begin);
-        const x2 : number = GLUtils.get_x_from_time(w, end);
+        const x1 : number = GLUtils.get_x_from_time(this.GetDisplayStartYear(), w, begin);
+        const x2 : number = GLUtils.get_x_from_time(this.GetDisplayStartYear(), w, end);
 
         const y1 : number = 0 * this.row_size;
         const y2 : number = this.getNumberOfPersons() * this.row_size;
 
         this.write_rectangle(f, iOffset, x1, y1, x2, y2, color);
+    }
+
+
+    /**
+     * Returns a random integer between min (inclusive) and max (inclusive)
+     * Using Math.round() will give you a non-uniform distribution!
+     */
+    getRandomInt(min: number, max: number): number {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -94,13 +103,26 @@ class Rectangles {
     build_interval_rectangle(f : Float32Array, iOffset : number, id : number,
                       begin : number, end : number, color : number, w: number): void {
 
-      const x1 : number = GLUtils.get_x_from_time(w, begin);
-      const x2 : number = GLUtils.get_x_from_time(w, end);
+      const x1 : number = GLUtils.get_x_from_time(this.GetDisplayStartYear(), w, begin);
+      const x2 : number = GLUtils.get_x_from_time(this.GetDisplayStartYear(), w, end);
 
-      const y1 : number = id * this.row_size;
-      const y2 : number = y1 + this.rectangle_thickness;
+      const y1_min : number = id * this.row_size;
+      const y2_max : number = y1_min + this.rectangle_thickness;
 
-      this.write_rectangle(f, iOffset, x1, y1, x2, y2, color);
+      /*
+      const nSplits: number = 1;
+
+      const iSplit : number = this.getRandomInt(0, nSplits);
+
+      const y_size: number = y2_max - y1_min;
+
+      const y_slice_size: number = y_size/nSplits;
+
+      const y1: number = y1_min + iSplit * y_slice_size;
+
+      const y2: number = y1 + y_slice_size;
+      */
+      this.write_rectangle(f, iOffset, x1, y1_min, x2, y2_max, color);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -110,11 +132,79 @@ class Rectangles {
 
     GetRectangleColorFromType(type_str: string): number {
 
-      if (type_str === "AA115") {
-        return 0.99;
+
+      let offset: number = 0;
+
+      let v: number = 0;
+
+             if (type_str === "AA115") {
+        v = 1;
+      } else if (type_str === "ATTF") {
+        v = 2;
+      } else if (type_str === "BIST14A") {
+        v = 3;
+      } else if (type_str === "TILTAK") {
+        v = 4;
+      } else if (type_str === "BEHOV") {
+        v = 5;
+      } else if (type_str === "BASI") {
+        v = 6;
+      } else if (type_str === "IDAG") {
+        v = 7;
+      } else if (type_str === "ATTK") {
+        v = 8;
+      } else if (type_str === "DAGO") {
+        v = 9;
+      } else if (type_str === "PERM") {
+        v = 10;
+      } else if (type_str === "BTIL") {
+        v = 11;
+      } else if (type_str === "TILU") {
+        v = 12;
+      } else if (type_str === "ISEM") {
+        v = 13;
+      } else if (type_str === "FRI_MK_AAP") {
+        v = 14;
+      } else if (type_str === "ISKO") {
+        v = 15;
+      } else if (type_str === "IEKS") {
+        v = 16;
+      } else if (type_str === "FSTO") {
+        v = 17;
+      } else if (type_str === "RSTO") {
+        v = 18;
+      } else if (type_str === "AAUNGUFOR") {
+        v = 19;
+      } else if (type_str === "IUND") {
+        v = 20;
+      } else if (type_str === "LREF") {
+        v = 21;
+      } else if (type_str === "AAP") {
+        v = 22;
+      } else if (type_str === "ATTP") {
+        v = 23;
+      } else if (type_str === "SKOP") {
+        v = 24;
+      } else if (type_str === "IREI") {
+        v = 25;
+      } else if (type_str === "ADAGR") {
+        v = 26;
+      } else if (type_str === "TSODAGREIS") {
+        v = 27;
       } else {
-        return 0.94;
+        v = 28;
       }
+
+      return offset + v;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // c     GetDisplayStartYear
+    //
+
+    GetDisplayStartYear(): number {
+      return this.json_mode_old ? 1995 : 2008;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -160,6 +250,10 @@ class Rectangles {
 
 
       if (!this.json_mode_old) {
+
+        var all_types: any = [];
+
+
         for (let iChunk : number = 0; iChunk < this.nMaxChunk; iChunk++) {
 
           const
@@ -203,6 +297,12 @@ class Rectangles {
                 continue;
               }
 
+              if (all_types.indexOf(types[type]) >= 0) {
+                // already contained
+              } else {
+                all_types.push(types[type]);
+              }
+
               let acIntervalData: any = person[types[type]];
 
               const nIntervalData: number = acIntervalData.length;
@@ -226,6 +326,9 @@ class Rectangles {
             }
           }
         }
+
+        Logger.log(1, "Elements of : " + all_types.length + " type(s) found");
+
       } else {
         for (let iChunk : number = 0; iChunk < this.nMaxChunk; iChunk++) {
 

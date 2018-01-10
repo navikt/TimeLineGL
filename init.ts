@@ -290,7 +290,9 @@ function main5(): void {
 
   radar = new Radar(g_gl);
 
-  text_renderer = new TextRenderer(g_gl);
+  const startYear: number = is_index1? 1995: 2008;
+
+  text_renderer = new TextRenderer(g_gl, startYear);
 
   rectangles = new Rectangles(g_gl);
 
