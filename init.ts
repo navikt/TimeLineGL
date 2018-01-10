@@ -33,6 +33,8 @@ let time : number = 0;
 let time_delta : number = 1;
 
 
+let is_index1 : boolean = true;
+
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 //     g_renderHTML
@@ -171,6 +173,10 @@ function loadImage(): void {
 //
 
 function main(): void {
+  const overlay : HTMLElement | null = document.getElementById("overlay");
+
+  is_index1 = (overlay != null);
+
   loadImage();
 }
 
