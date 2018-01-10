@@ -18,6 +18,10 @@ void main() {
     return;
   }
 
+  outColor = vec4(0,0,1,0.6);
+
+
+
   if (colorValue < 0.61)
   {
     outColor = vec4(0, 0, 1, 0.7);
@@ -43,7 +47,7 @@ void main() {
   }
 
   float
-    rAlpha = 0.9f;
+    rAlpha = 0.7f;
 
   if (colorValue == float (1))
   {

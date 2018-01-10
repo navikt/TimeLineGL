@@ -101,7 +101,7 @@ class Rectangles {
     //
 
     build_interval_rectangle(f : Float32Array, iOffset : number, id : number,
-                      begin : number, end : number, color : number, w: number): void {
+                      begin : number, end : number, color : number, w: number, nSplits : number): void {
 
       const x1 : number = GLUtils.get_x_from_time(this.GetDisplayStartYear(), w, begin);
       const x2 : number = GLUtils.get_x_from_time(this.GetDisplayStartYear(), w, end);
@@ -109,20 +109,22 @@ class Rectangles {
       const y1_min : number = id * this.row_size;
       const y2_max : number = y1_min + this.rectangle_thickness;
 
-      /*
-      const nSplits: number = 1;
+      if (nSplits >= 2) {
 
-      const iSplit : number = this.getRandomInt(0, nSplits);
+        const iSplit : number = this.getRandomInt(0, nSplits -1);
 
-      const y_size: number = y2_max - y1_min;
+        const y_size: number = y2_max - y1_min;
 
-      const y_slice_size: number = y_size/nSplits;
+        const y_slice_size: number = y_size/nSplits;
 
-      const y1: number = y1_min + iSplit * y_slice_size;
+        const y1: number = y1_min + iSplit * y_slice_size;
 
-      const y2: number = y1 + y_slice_size;
-      */
-      this.write_rectangle(f, iOffset, x1, y1_min, x2, y2_max, color);
+        const y2: number = y1 + y_slice_size;
+
+        this.write_rectangle(f, iOffset, x1, y1, x2, y2, color);
+      } else {
+        this.write_rectangle(f, iOffset, x1, y1_min, x2, y2_max, color);
+      }
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -279,7 +281,7 @@ class Rectangles {
             const time0 : number = (1995 - 1970) * 365.242199;
             const time1 : number = (2018 - 1970) * 365.242199;
 
-            this.build_interval_rectangle(cpu_data, iOffset, id, time0, time1, 0.8, world_width);
+            this.build_interval_rectangle(cpu_data, iOffset, id, time0, time1, 0.8, world_width, 0);
 
             iOffset += nElementsPerRectangle;
 
@@ -316,7 +318,7 @@ class Rectangles {
                 const color: number = this.GetRectangleColorFromType(types[type]);
 
 
-                this.build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, world_width);
+                this.build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, world_width, 3);
 
                 iOffset += nElementsPerRectangle;
 
@@ -349,7 +351,7 @@ class Rectangles {
           const time0 : number = (1995 - 1970) * 365.242199;
           const time1 : number = (2018 - 1970) * 365.242199;
 
-          this.build_interval_rectangle(cpu_data, iOffset, id, time0, time1, 0.8, world_width);
+          this.build_interval_rectangle(cpu_data, iOffset, id, time0, time1, 0.8, world_width, 0);
 
           iOffset += nElementsPerRectangle;
 
@@ -358,7 +360,7 @@ class Rectangles {
             const end : number = begin - 14;
             const color : number = 0.6;
 
-            this.build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, world_width);
+            this.build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, world_width, 0);
 
             iOffset += nElementsPerRectangle;
 
@@ -373,7 +375,7 @@ class Rectangles {
             const end   : number = aa_intervals[iAA + 1];
             const color : number = 0.3;
 
-            this.build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, world_width);
+            this.build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, world_width, 0);
 
             iOffset += nElementsPerRectangle;
           }
