@@ -11,6 +11,9 @@ class Rectangles {
     offsetLocation : number;
     y_scaleLocation : number;
 
+    viz_factor1Location : number;
+    viz_factor2Location : number;
+
     buffer : number;
     vao : number;
 
@@ -126,6 +129,29 @@ class Rectangles {
         this.write_rectangle(f, iOffset, x1, y1_min, x2, y2_max, color);
       }
     }
+/*
+
+    AA          Arbeidsavklaringspenger
+    ARBEID      Oppfølgingssak
+    ATTF      Yrkesrettet attføring
+    DAGP    Dagpenger
+    ENSLIG Enslig forsørger
+    FEILUTBE             Feilutbetaling
+    INDIV    Individstønad
+    KLAN     Klage/Anke
+    MOBIL  Mobilitetsfremmende stønad
+    REHAB  Rehabiliteringspenger
+    SANKSJON         Sanksjon sykmeldt
+    SANKSJON_A    Sanksjon arbeidsgiver
+    SANKSJON_B    Sanksjon behandler
+    SYKEP   Sykepenger
+    TILSTOVER          Tilleggsstønad
+    TILSTRAMME    Tilleggsstønad arbeidssøkere
+    TILT        Tiltakssak
+    UFOREYT             Uføreytelser
+    UTRSYA               Utredning KTD
+    VLONN Ventelønn
+*/
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
@@ -139,62 +165,48 @@ class Rectangles {
 
       let v: number = 0;
 
-             if (type_str === "AA115") {
+             if (type_str === "AA") {
         v = 1;
-      } else if (type_str === "ATTF") {
+      } else if (type_str === "ARBEID") {
         v = 2;
-      } else if (type_str === "BIST14A") {
+      } else if (type_str === "ATTF") {
         v = 3;
-      } else if (type_str === "TILTAK") {
+      } else if (type_str === "DAGP") {
         v = 4;
-      } else if (type_str === "BEHOV") {
+      } else if (type_str === "ENSLIG") {
         v = 5;
-      } else if (type_str === "BASI") {
+      } else if (type_str === "FEILUTBE") {
         v = 6;
-      } else if (type_str === "IDAG") {
+      } else if (type_str === "INDIV") {
         v = 7;
-      } else if (type_str === "ATTK") {
+      } else if (type_str === "KLAN") {
         v = 8;
-      } else if (type_str === "DAGO") {
+      } else if (type_str === "MOBIL") {
         v = 9;
-      } else if (type_str === "PERM") {
+      } else if (type_str === "REHAB") {
         v = 10;
-      } else if (type_str === "BTIL") {
+      } else if (type_str === "SANKSJON") {
         v = 11;
-      } else if (type_str === "TILU") {
+      } else if (type_str === "SANKSJON_A") {
         v = 12;
-      } else if (type_str === "ISEM") {
+      } else if (type_str === "SANKSJON_B") {
         v = 13;
-      } else if (type_str === "FRI_MK_AAP") {
+      } else if (type_str === "SYKEP") {
         v = 14;
-      } else if (type_str === "ISKO") {
+      } else if (type_str === "TILSTOVER") {
         v = 15;
-      } else if (type_str === "IEKS") {
+      } else if (type_str === "TILSTRAMME") {
         v = 16;
-      } else if (type_str === "FSTO") {
+      } else if (type_str === "TILT") {
         v = 17;
-      } else if (type_str === "RSTO") {
+      } else if (type_str === "UFOREYT") {
         v = 18;
-      } else if (type_str === "AAUNGUFOR") {
+      } else if (type_str === "UTRSYA") {
         v = 19;
-      } else if (type_str === "IUND") {
+      } else if (type_str === "VLONN") {
         v = 20;
-      } else if (type_str === "LREF") {
-        v = 21;
-      } else if (type_str === "AAP") {
-        v = 22;
-      } else if (type_str === "ATTP") {
-        v = 23;
-      } else if (type_str === "SKOP") {
-        v = 24;
-      } else if (type_str === "IREI") {
-        v = 25;
-      } else if (type_str === "ADAGR") {
-        v = 26;
-      } else if (type_str === "TSODAGREIS") {
-        v = 27;
       } else {
-        v = 28;
+        v = 21;
       }
 
       return offset + v;
@@ -553,6 +565,8 @@ class Rectangles {
         this.offsetLocation = GLUtils.getUniformLocation(this.gl, this.program, "pixel_offset", true);
         this.y_scaleLocation = GLUtils.getUniformLocation(this.gl, this.program, "y_scale", true);
 
+        this.viz_factor1Location = GLUtils.getUniformLocation(this.gl, this.program, "viz_factor1", true);
+        this.viz_factor2Location = GLUtils.getUniformLocation(this.gl, this.program, "viz_factor2", true);
 
         this.buffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
@@ -585,7 +599,8 @@ class Rectangles {
     //     render
     //
 
-    render(y : number, y_scale : number, row0: number, row1 : number, isYearLines : boolean, x_factor : number): void {
+    render(y : number, y_scale : number, row0: number, row1 : number, isYearLines : boolean,
+                                                      x_factor : number, rVizFactor_1: number, rVizFactor_2: number): void {
 
       this.gl.useProgram(this.program);
 
@@ -596,6 +611,9 @@ class Rectangles {
       this.gl.uniform2f(this.contentsizeUniformLocation, x_factor, 1);
       this.gl.uniform2f(this.offsetLocation, 0, -y);
       this.gl.uniform1f(this.y_scaleLocation, y_scale);
+
+      this.gl.uniform1f(this.viz_factor1Location, rVizFactor_1);
+      this.gl.uniform1f(this.viz_factor2Location, rVizFactor_2);
 
       let count : number = this.nRectangleCount * 6;
 

@@ -343,7 +343,13 @@ function g_render(): void {
   const
     nLastRow: number = viewport.get_row_max();
 
-  rectangles.render(y, viewport.y_scale, nFirstRow, nLastRow, g_isYearLines, x_factor);
+  const
+    rVizFactor_1: number = viewport.GetVizFactor1();
+
+  const
+    rVizFactor_2: number = viewport.GetVizFactor2();
+
+  rectangles.render(y, viewport.y_scale, nFirstRow, nLastRow, g_isYearLines, x_factor, rVizFactor_1, rVizFactor_2);
 
   text_renderer.render();
 

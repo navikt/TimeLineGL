@@ -8,6 +8,9 @@ out float colorValue;
 
 out float alphaValue;
 
+out float rViz1Value;
+out float rViz2Value;
+
 // Resolution of canvas
 uniform vec2 u_resolution;
 
@@ -17,6 +20,9 @@ uniform vec2 u_contents_size;
 uniform vec2 pixel_offset;
 
 uniform float y_scale;
+
+uniform float viz_factor1;
+uniform float viz_factor2;
 
 void main() {
  
@@ -51,5 +57,8 @@ void main() {
 
 
   alphaValue = 1.0 - gl_Position.y * gl_Position.y;
+
+  rViz1Value = viz_factor1;
+  rViz2Value = viz_factor2;
 
 }

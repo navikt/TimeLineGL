@@ -10,21 +10,24 @@ in float colorValue;
 
 in float alphaValue;
 
+in float rViz1Value;
+in float rViz2Value;
+
 void main() {
 
   if (colorValue < 0.31)
   {
-    outColor = vec4(0.3, 1, 0, 0.7);
+    outColor = vec4(0.3, 1, 0, rViz1Value);
     return;
   }
 
-  outColor = vec4(0,0,1,0.6);
+  outColor = vec4(0,0,1,0.6 * rViz1Value);
 
 
 
   if (colorValue < 0.61)
   {
-    outColor = vec4(0, 0, 1, 0.7);
+    outColor = vec4(0, 0, 1, rViz2Value);
     return;
   }
   
@@ -36,23 +39,23 @@ void main() {
   
   if (colorValue < 0.92)
   {
-    outColor = vec4(0, 0, 0, 0.6);
+    outColor = vec4(0, 0, 0, 0.6 * rViz1Value);
     return;
   }
   
   if (colorValue < 0.97)
   {
-    outColor = vec4(0, 0, 0, 0.6);
+    outColor = vec4(0, 0, 0, 0.6* rViz1Value);
     return;
   }
 
   float
-    rAlpha = 0.7f;
+    rAlpha = 0.7;
+
 
   if (colorValue == float (1))
   {
-    // AA115
-    
+    // AA
     // RED
     outColor = vec4(1, 0, 0, rAlpha);
     return;
@@ -60,112 +63,94 @@ void main() {
   
   if (colorValue == float(2))
   {
-    // ATTF
-
-    // GREEN
-    outColor = vec4(0, 1, 0, rAlpha);
+    // ARBEID
+    // YELLOW
+    outColor = vec4(1, 1, 0, rAlpha);
+    
     return;
   }
   
   if (colorValue == float(3))
   {
-    // BIST14A
-
-    // BLUE
-    outColor = vec4(0, 0, 1, rAlpha);
-    return;
-  }
-
-  if (colorValue == float(4))
-  {
-    // TILTAK
-
-    // CYAN
-    outColor = vec4(0, 1, 1, rAlpha);
-    return;
-  }
-
-  if (colorValue == float(5))
-  {
-    // BEHOV
-
-    // PURPLE
-    outColor = vec4(1, 0, 1, rAlpha);
-    return;
-  }
-
-  if (colorValue == float(6))
-  {
-    // BASI
-
+    // ATTF
     // PURPUR
     outColor = vec4(0.5, 0, 0.5, rAlpha);
     return;
   }
 
-  if (colorValue == float(9))
+  if (colorValue == float(4))
   {
-    // DAGO
-
-    // YELLOW
-    outColor = vec4(1, 1, 0, rAlpha);
+    // DAGP
+    // GREEN
+    outColor = vec4(0, 1, 0, rAlpha);
     return;
   }
 
-  if (colorValue == float(22))
+  if (colorValue == float(5))
   {
-    // AAP
-
-    // ORANGE
-    outColor = vec4(1, 0.50, 0, rAlpha);
+    // ENSLIG
+    // PURPLE
+    outColor = vec4(1, 0, 1, rAlpha);
     return;
   }
 
-  if (colorValue == float(23))
-  {
-    // ATTP
-
-    // LIME
-    outColor = vec4(0.5, 1, 0, rAlpha);
-    return;
-  }
-
-  // GRAY FOR THE REST
-  outColor = vec4(0.5, 1, 0, rAlpha);
-
-/*
   if (colorValue == float(7))
   {
-    // IDAG
-    
-    // GRAY
-    outColor = vec4(0, 0, 0, rAlpha);
+    // INDIV
+    // ORANGE
+    outColor = vec4(1, 0.5, 0, rAlpha);
     return;
   }
 
-  if (colorValue == float(8))
+
+
+
+
+
+  if (colorValue == float(6))
   {
-    // ATTK
+    // FEILUTBE
 
     // GRAY
     outColor = vec4(0, 0, 0, rAlpha);
+
+    
     return;
   }
+ 
 
   
+  if (colorValue == float(8))
+  {
+    // KLAN
+
+    // GRAY
+    outColor = vec4(0, 0, 0, rAlpha);
+    return;
+  }
+
+  if (colorValue == float(9))
+  {
+    // MOBIL
+  // GRAY
+    outColor = vec4(0, 0, 0, rAlpha);
+   
+    return;
+  }
 
   if (colorValue == float(10))
   {
-    // PERM
+    // REHAB
 
     // GRAY
     outColor = vec4(0, 0, 0, rAlpha);
     return;
   }
+
   
   if (colorValue == float(11))
   {
-    // BTIL
+    // SANKSJON
     
     // GRAY
     outColor = vec4(0, 0, 0, rAlpha);
@@ -174,7 +159,7 @@ void main() {
 
   if (colorValue == float(12))
   {
-    // TILU
+    // SANKSJON_A
     
     // GRAY
     outColor = vec4(0, 0, 0, rAlpha);
@@ -183,7 +168,7 @@ void main() {
 
   if (colorValue == float(13))
   {
-    // ISEM
+    // SANKSJON_B
     
     // GRAY
     outColor = vec4(0, 0, 0, rAlpha);
@@ -192,7 +177,7 @@ void main() {
 
   if (colorValue == float(14))
   {
-    // FRI_MK_AAP
+    // SYKEP
 
     // GRAY
     outColor = vec4(0, 0, 0, rAlpha);
@@ -201,84 +186,52 @@ void main() {
 
   if (colorValue == float(15))
   {
-    // ISKO
+    // TILSTOVER
     outColor = vec4(0, 0, 0, rAlpha);
     return;
   }
 
   if (colorValue == float(16))
   {
-    // IEKS
+    // TILSTRAMME
     outColor = vec4(0, 0, 0, rAlpha);
     return;
   }
 
   if (colorValue == float(17))
   {
-    // FSTO
+    // TILT
     outColor = vec4(0, 0, 0, rAlpha);
     return;
   }
 
   if (colorValue == float(18))
   {
-    // RSTO
+    // UFOREYT
     outColor = vec4(0, 0, 0, rAlpha);
     return;
   }
 
+
   if (colorValue == float(19))
   {
-    // AAUNGUFOR
+    // UTRSYA
     outColor = vec4(0, 0, 0, rAlpha);
     return;
   }
 
   if (colorValue == float(20))
   {
-    // IUND
+    // VLONN
     outColor = vec4(0, 0, 0, rAlpha);
     return;
   }
 
-  if (colorValue == float(21))
-  {
-    // LREF
-    outColor = vec4(0, 0, 0, rAlpha);
-    return;
-  }
-
-  if (colorValue == float(24))
-  {
-    // SKOP
-    outColor = vec4(0, 0, 0, rAlpha);
-    return;
-  }
-
-  if (colorValue == float(25))
-  {
-    // IREI
-    outColor = vec4(0, 0, 0, rAlpha);
-    return;
-  }
-
-  if (colorValue == float(26))
-  {
-    // ADAGR
-    outColor = vec4(0, 0, 0, rAlpha);
-    return;
-  }
-  if (colorValue == float(27))
-  {
-    // TSODAGREIS
-    outColor = vec4(0, 0, 0, rAlpha);
-    return;
-  }
-
-  // UNKNOWN
+  // GRAY FOR THE REST
   outColor = vec4(0, 0, 0, rAlpha);
- */
+
 }
+
       
      
       

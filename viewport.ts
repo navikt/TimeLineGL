@@ -22,6 +22,9 @@ class ViewPort {
     y_scale_optimal : number = 0;
     y_scale_optimal_mouse : number = 0;
 
+    viz_factor1 : number = 0;
+    viz_factor2 : number = 0;
+
     gl : any;
     canvas : HTMLCanvasElement;
 
@@ -37,7 +40,9 @@ class ViewPort {
         canvas.onmousemove = this.handleMouseMove;
         canvas.onmousewheel = this.handleMouseWheel;
 
+
         window.addEventListener("resize", this.resizeEventHandler, false);
+        window.addEventListener("keydown", this.handleKeyDown, false);
 
         this.cbRender = cbRender;
     }
@@ -85,7 +90,7 @@ class ViewPort {
         const
             row : number = content_y / this.row_size;
 
-            Logger.log(1, "'trace at screen y = " + screen_y + "' gives row = " + row);
+            Logger.log(5, "'trace at screen y = " + screen_y + "' gives row = " + row);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -124,6 +129,68 @@ class ViewPort {
         if (this.isDragging) {
             requestAnimationFrame(this.cbRender);
         }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    //     handleKeyDown
+    //
+
+    handleKeyDown = (event: any) => {
+
+        Logger.log(5, "keycode = " + event.keyCode);
+
+        if (event.keyCode === 81) {
+            this.viz_factor1 -= 0.01;
+        } else if (event.keyCode === 87) {
+            this.viz_factor1 += 0.01;
+        }
+
+        if (event.keyCode === 65) {
+            this.viz_factor2 -= 0.01;
+        } else if (event.keyCode === 83) {
+            this.viz_factor2 += 0.01;
+        }
+
+
+        if (this.viz_factor1 < 0) {
+            this.viz_factor1 = 0;
+        }
+
+        if (this.viz_factor1 > 1) {
+            this.viz_factor1 = 1;
+        }
+
+        if (this.viz_factor2 < 0) {
+            this.viz_factor2 = 0;
+        }
+
+        if (this.viz_factor2 > 1) {
+            this.viz_factor2 = 1;
+        }
+
+        Logger.log(5, "vizfactor1 = " + this.viz_factor1 + ", vizfactor2 = " + this.viz_factor2);
+
+        requestAnimationFrame(this.cbRender);
+
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // c     GetVizFactor1
+    //
+
+    GetVizFactor1(): number {
+        return this.viz_factor1;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // c     GetVizFactor2
+    //
+
+    GetVizFactor2(): number {
+        return this.viz_factor2;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
