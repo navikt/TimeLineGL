@@ -4,7 +4,7 @@ class ViewPort {
 
     offsetX : number = 0;
     offsetY : number = 0;
-    offsetY_anim = this.offsetY;
+    private offsetY_anim = this.offsetY;
 
     WORLD_WIDTH : number = 700;
 
@@ -149,16 +149,18 @@ class ViewPort {
         const viz_factor1_old : number = this.viz_factor1;
         const viz_factor2_old : number = this.viz_factor2;
 
+        const viz_change_factor : number = 0.05;
+
         if (event.keyCode === 81) {
-            this.viz_factor1 -= 0.01;
+            this.viz_factor1 -= viz_change_factor;
         } else if (event.keyCode === 87) {
-            this.viz_factor1 += 0.01;
+            this.viz_factor1 += viz_change_factor;
         }
 
         if (event.keyCode === 65) {
-            this.viz_factor2 -= 0.01;
+            this.viz_factor2 -= viz_change_factor;
         } else if (event.keyCode === 83) {
-            this.viz_factor2 += 0.01;
+            this.viz_factor2 += viz_change_factor;
         }
 
         if (this.viz_factor1 < 0) {

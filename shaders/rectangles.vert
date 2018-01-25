@@ -41,7 +41,9 @@ void main() {
   // convert from 0->2 to -1->+1 (clipspace)
   vec2 clipSpace = zeroToTwo - 1.0;
 
-  gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+  // clipSpace = clipSpace * viz_factor1;
+
+  gl_Position = vec4(clipSpace * vec2(1 , -1), 0, 1);
 
 /*
   if (a_position.x > 0.3 || a_position.x < -0.3)

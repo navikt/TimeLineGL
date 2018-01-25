@@ -29,6 +29,7 @@ class Rectangles {
     json_raw : any[] = [];
 
     json_mode_old : boolean;
+    start_year: number;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -78,10 +79,10 @@ class Rectangles {
     //     build_bar_rectangle
     //
 
-    build_bar_rectangle(f : Float32Array, iOffset : number, begin : number, end : number, color : number, w : number): void {
+    build_bar_rectangle(f : Float32Array, iOffset : number, begin : number, end : number, color : number, world_width : number): void {
 
-        const x1 : number = GLUtils.get_x_from_time(this.GetDisplayStartYear(), w, begin);
-        const x2 : number = GLUtils.get_x_from_time(this.GetDisplayStartYear(), w, end);
+        const x1 : number = GLUtils.static_get_x_from_time(this.GetDisplayStartYear(), world_width, begin);
+        const x2 : number = GLUtils.static_get_x_from_time(this.GetDisplayStartYear(), world_width, end);
 
         const y1 : number = 0 * this.row_size;
         const y2 : number = this.getNumberOfPersons() * this.row_size;
@@ -106,8 +107,8 @@ class Rectangles {
     build_interval_rectangle(f : Float32Array, iOffset : number, id : number,
                       begin : number, end : number, color : number, w: number, nSplits : number): void {
 
-      const x1 : number = GLUtils.get_x_from_time(this.GetDisplayStartYear(), w, begin);
-      const x2 : number = GLUtils.get_x_from_time(this.GetDisplayStartYear(), w, end);
+      const x1 : number = GLUtils.static_get_x_from_time(this.GetDisplayStartYear(), w, begin);
+      const x2 : number = GLUtils.static_get_x_from_time(this.GetDisplayStartYear(), w, end);
 
       const y1_min : number = id * this.row_size;
       const y2_max : number = y1_min + this.rectangle_thickness;
@@ -218,7 +219,7 @@ class Rectangles {
     //
 
     GetDisplayStartYear(): number {
-      return this.json_mode_old ? 1995 : 2008;
+      return this.start_year;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -542,12 +543,13 @@ class Rectangles {
     //     setup
     //
 
-    setup(vertex_source : string, fragment_source : string, row_size : number, json_mode_old: boolean,
+    setup(vertex_source : string, fragment_source : string, row_size : number, start_year: number, json_mode_old: boolean,
                     json_raw :  any[], nMaxChunk : number, world_width : number): void {
 
         this.nMaxChunk = nMaxChunk;
         this.json_raw = json_raw;
         this.json_mode_old = json_mode_old;
+        this.start_year = start_year;
 
         this.row_size = row_size;
 

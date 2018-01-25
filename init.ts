@@ -306,7 +306,8 @@ function main5(): void {
 
   text_renderer.setup(g_text_image, g_shader_source[2], g_shader_source[3]);
 
-  rectangles.setup(g_shader_source[0], g_shader_source[1], viewport.row_size, is_index1, g_json_raw, g_GetMaxChunk(), viewport.WORLD_WIDTH);
+  rectangles.setup(g_shader_source[0], g_shader_source[1], viewport.row_size, startYear,
+                              is_index1, g_json_raw, g_GetMaxChunk(), viewport.WORLD_WIDTH);
 
   requestAnimationFrame(g_render);
 }
