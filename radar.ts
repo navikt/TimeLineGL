@@ -32,12 +32,6 @@ class Detail {
 
     const nRows: number = (nLastRow - nFirstRow) > 1 ? (nLastRow - nFirstRow) : 1;
 
-
-    if (nRows > 20) {
-      return;
-    }
-
-
     const size_y: number = 1.0/ nRows;
 
 

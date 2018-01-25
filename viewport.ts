@@ -22,6 +22,12 @@ class ViewPort {
     y_scale_optimal : number = 0;
     y_scale_optimal_mouse : number = 0;
 
+    wheel_scale_factor: number = 0.7;
+
+    y_anim_snap_threshold : number = 0.005;
+    y_anim_speed_factor : number = 7;
+
+
     viz_factor1 : number = 0;
     viz_factor2 : number = 0;
 
@@ -247,10 +253,10 @@ class ViewPort {
 
         const y_scale_current : number = (this.y_scale_optimal === 0) ? this.y_scale : this.y_scale_optimal;
 
-        if (d > 0) {
-            y_scale_new = y_scale_current * 1.1;
+        if (d < 0) {
+            y_scale_new = y_scale_current * this.wheel_scale_factor;
         } else {
-            y_scale_new = y_scale_current / 1.1;
+            y_scale_new = y_scale_current / this.wheel_scale_factor;
         }
 
         this.y_scale_optimal = y_scale_new;
@@ -270,11 +276,11 @@ class ViewPort {
           diff : number = this.getOffsetY() - this.offsetY_anim;
 
         const
-          N : number = 7;
+          N : number = this.y_anim_speed_factor;
 
         diff = (N - 1) * diff / N;
 
-        if (Math.abs(diff) < 0.005) {
+        if (Math.abs(diff) < this.y_anim_snap_threshold) {
             this.offsetY_anim = this.getOffsetY();
         } else {
             this.offsetY_anim = this.getOffsetY() - diff;
@@ -358,8 +364,8 @@ class ViewPort {
         const
             y_scale_new : number = y_diff + this.y_scale_optimal;
 
-        if (Math.abs(y_diff) < 0.005) {
-        // console.log('Animation met threshold');
+        if (Math.abs(y_diff) < this.y_anim_snap_threshold) {
+            console.log("'Animation met threshold");
             this.animate_y_end_and_stop();
         } else {
             this.set_y_scale_and_adjust_offset(y_scale_new, this.y_scale_optimal_mouse);

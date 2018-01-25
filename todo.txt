@@ -4,6 +4,15 @@ TOOL
 ----
 
 
+* Zoom in/out to number visible 10, 50, 100, 200 on key press.
+
+* Inertia on motion up/down.
+
+* Animate colour.
+
+
+
+
 * Full text support.
 
 
@@ -19,11 +28,7 @@ TOOL
 
 * Analyze performance on separate screen. (Room 4020).
 
-* Reorganize for database access or not. Implement more solid username and password isolation.
-
 * Ways to present (several) overlapping intervals.
-
-
 
 * Define and announce API.
 
@@ -50,7 +55,7 @@ DATA
 
 * Alder, folkeregistrert dato (rett fra utland).
 
-* AA: Skaff selvstendig næringsdrivende
+* AA: Skaff selvstendig nï¿½ringsdrivende
 
 * Lage 'bare' for aktive brukere.
 
@@ -58,8 +63,8 @@ DATA
 
 * Landbakgrunn
 
-* Ide: Bak om noen til å ha fiktive jobber for å dekke det man vet bare statistisk?
-  el: For å gå fra brudd til kontinuitet.
+* Ide: Bak om noen til ï¿½ ha fiktive jobber for ï¿½ dekke det man vet bare statistisk?
+  el: For ï¿½ gï¿½ fra brudd til kontinuitet.
 
 
 

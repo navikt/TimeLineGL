@@ -32,6 +32,8 @@ let g_node3 : Text;
 let time : number = 0;
 let time_delta : number = 1;
 
+let g_enable_detail_box: boolean = false;
+
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 //     g_GetMaxChunk
@@ -361,7 +363,12 @@ function g_render(): void {
   const
     mouse_y : number = viewport.getCurrentY();
 
-  detail.render(nFirstRow, nLastRow);
+  const
+    nRowsDisplayed: number = (nLastRow - nFirstRow) > 1 ? (nLastRow - nFirstRow) : 1;
+
+  if (g_enable_detail_box && nRowsDisplayed < 20 && nRowsDisplayed > 3) {
+    detail.render(nFirstRow, nLastRow);
+  }
 
 }
 
