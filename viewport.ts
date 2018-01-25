@@ -63,7 +63,7 @@ class ViewPort {
         if (event) {
             let a : number = 1;
         }
-        requestAnimationFrame(this.cbRender);
+        // requestAnimationFrame(this.cbRender);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -117,7 +117,7 @@ class ViewPort {
 
         Logger.log(1, "'handleMouseUp delta (" + (this.x_current - this.x_down) + "'," + (this.y_current - this.y_down) + "')");
 
-        requestAnimationFrame(this.cbRender);
+        // requestAnimationFrame(this.cbRender);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -133,7 +133,7 @@ class ViewPort {
         this.y_current = event.clientY - rect.top;
 
         if (this.isDragging) {
-            requestAnimationFrame(this.cbRender);
+            // requestAnimationFrame(this.cbRender);
         }
     }
 
@@ -146,6 +146,9 @@ class ViewPort {
 
         Logger.log(5, "keycode = " + event.keyCode);
 
+        const viz_factor1_old : number = this.viz_factor1;
+        const viz_factor2_old : number = this.viz_factor2;
+
         if (event.keyCode === 81) {
             this.viz_factor1 -= 0.01;
         } else if (event.keyCode === 87) {
@@ -157,7 +160,6 @@ class ViewPort {
         } else if (event.keyCode === 83) {
             this.viz_factor2 += 0.01;
         }
-
 
         if (this.viz_factor1 < 0) {
             this.viz_factor1 = 0;
@@ -175,9 +177,10 @@ class ViewPort {
             this.viz_factor2 = 1;
         }
 
-        Logger.log(5, "vizfactor1 = " + this.viz_factor1 + ", vizfactor2 = " + this.viz_factor2);
-
-        requestAnimationFrame(this.cbRender);
+        if (this.viz_factor1 !== viz_factor1_old || this.viz_factor2 !== viz_factor2_old) {
+            Logger.log(5, "vizfactor1 = " + this.viz_factor1 + ", vizfactor2 = " + this.viz_factor2);
+            // requestAnimationFrame(this.cbRender);
+        }
 
     }
 
@@ -192,11 +195,29 @@ class ViewPort {
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
+    // c     SetVizFactor1
+    //
+
+    SetVizFactor1(factor: number): void {
+        this.viz_factor1 = factor;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
     // c     GetVizFactor2
     //
 
     GetVizFactor2(): number {
         return this.viz_factor2;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // c     SetVizFactor2
+    //
+
+    SetVizFactor2(factor: number): void {
+        this.viz_factor2 = factor;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -262,7 +283,7 @@ class ViewPort {
         this.y_scale_optimal = y_scale_new;
         this.y_scale_optimal_mouse = y_mouse;
 
-        requestAnimationFrame(this.cbRender);
+        // requestAnimationFrame(this.cbRender);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////
@@ -284,7 +305,7 @@ class ViewPort {
             this.offsetY_anim = this.getOffsetY();
         } else {
             this.offsetY_anim = this.getOffsetY() - diff;
-            requestAnimationFrame(this.cbRender);
+            // requestAnimationFrame(this.cbRender);
         }
     }
 
@@ -369,7 +390,7 @@ class ViewPort {
             this.animate_y_end_and_stop();
         } else {
             this.set_y_scale_and_adjust_offset(y_scale_new, this.y_scale_optimal_mouse);
-            requestAnimationFrame(this.cbRender);
+            // requestAnimationFrame(this.cbRender);
         }
     }
 

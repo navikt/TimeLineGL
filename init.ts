@@ -311,12 +311,40 @@ function main5(): void {
   requestAnimationFrame(g_render);
 }
 
+
+
+
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 //     g_render
 //
 
-function g_render(): void {
+function g_render(now : number): void {
+
+  const is_animate_viz_factor : boolean = false;
+
+  if (is_animate_viz_factor) {
+
+    const PERIOD: number = 5.0; // secs
+
+    const now_sec: number = now/1000.0;
+
+    const T: number = now_sec % PERIOD;
+
+    const V: number = T/PERIOD;
+
+    console.log("V = " + V);
+
+    const sin_value1 : number = Math.sin(V * 2 * Math.PI);
+
+    const sin_value2 : number = Math.sin(V * 2 * Math.PI + Math.PI);
+
+    const out_value1 : number = (sin_value1 + 1) / 2.0;
+    const out_value2 : number = (sin_value2 + 1) / 2.0;
+
+    viewport.SetVizFactor1(out_value1);
+    viewport.SetVizFactor2(out_value2);
+  }
 
   g_renderHTML();
 
@@ -370,6 +398,7 @@ function g_render(): void {
     detail.render(nFirstRow, nLastRow);
   }
 
+  requestAnimationFrame(g_render);
 }
 
 main();
