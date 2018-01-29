@@ -14,12 +14,13 @@
     },
     "files": [
         "logger.ts",
+        "configuration.ts",
         "gl-utils.ts",
         "viewport.ts",
         "rectangles.ts",
         "text.ts",
         "radar.ts",
         "init.ts"
-        
+       
     ]
 }

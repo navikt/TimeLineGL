@@ -27,8 +27,9 @@ class Rectangles {
     nMaxChunk : number;
     json_raw : any[] = [];
 
-
     viewport : ViewPort;
+
+    configuration : Configuration;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -36,10 +37,11 @@ class Rectangles {
     //     constructor
     //
 
-    constructor(gl : any, viewport : ViewPort) {
+    constructor(gl : any, configuration : Configuration, viewport : ViewPort) {
 
         this.gl = gl;
         this.viewport = viewport;
+        this.configuration = configuration;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -130,29 +132,6 @@ class Rectangles {
         this.write_rectangle(f, iOffset, x1, y1_min, x2, y2_max, color);
       }
     }
-/*
-
-    AA          Arbeidsavklaringspenger
-    ARBEID      Oppfølgingssak
-    ATTF      Yrkesrettet attføring
-    DAGP    Dagpenger
-    ENSLIG Enslig forsørger
-    FEILUTBE             Feilutbetaling
-    INDIV    Individstønad
-    KLAN     Klage/Anke
-    MOBIL  Mobilitetsfremmende stønad
-    REHAB  Rehabiliteringspenger
-    SANKSJON         Sanksjon sykmeldt
-    SANKSJON_A    Sanksjon arbeidsgiver
-    SANKSJON_B    Sanksjon behandler
-    SYKEP   Sykepenger
-    TILSTOVER          Tilleggsstønad
-    TILSTRAMME    Tilleggsstønad arbeidssøkere
-    TILT        Tiltakssak
-    UFOREYT             Uføreytelser
-    UTRSYA               Utredning KTD
-    VLONN Ventelønn
-*/
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
@@ -315,6 +294,11 @@ class Rectangles {
             for (let iIntervalData : number = 0; iIntervalData < nIntervalData; iIntervalData+=2) {
               const begin: number = acIntervalData[iIntervalData + 0];
               const end: number =   acIntervalData[iIntervalData + 1];
+
+              const config_value: Array<number> = this.configuration.GetRGBAForType(types[type]);
+
+              Logger.log(1, "Type " + types[type] + "Received color (RGBA) = (" + config_value[0] + ", " + config_value[1]
+                                                    + ", " + config_value[2] + ", " + config_value[3] + ")");
 
               const color: number = this.GetRectangleColorFromType(types[type]);
 

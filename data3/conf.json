@@ -1,17 +1,91 @@
+{
+    "DATA": {
+        "BASENAME" : "data",
+        "CHUNKS" : 29
+    },
+
+    "ERRORCOLOR" : [255, 120, 119, 117],
+
+    "INTERVALS": {
+
+        "AAREG": {
+            "TITLE" : "AAREG",
+            "FILLCOLOR" : [255, 255, 119, 255],
+            "EXTRA" : 12
+        },
+
+        "NY": {
+            "TITLE" : "FØDT",
+            "FILLCOLOR" : [255, 255, 255, 255],
+            "EXTRA" : 12
+        },
+
+        "AA": {
+            "TITLE" : "ARBEIDSAVKLARING",
+            "FILLCOLOR" : [255, 255, 255, 255],
+            "EXTRA" : 12
+        },
+
+        "ARBEID": {
+            "TITLE" : "OPPFØLGING",
+            "FILLCOLOR" : [255, 255, 255, 255],
+            "EXTRA" : 12
+        },
+
+        "MELD": {
+            "TITLE" : "MELDEKORT",
+            "FILLCOLOR" : [255, 255, 255, 255],
+            "EXTRA" : 12
+        },
+
+        "ATTF": {
+            "TITLE" : "ATTFØRING",
+            "FILLCOLOR" : [255, 255, 255, 255],
+            "EXTRA" : 12
+        },
+
+        "INDIV": {
+            "TITLE" : "INDIVIDSTØNAD",
+            "FILLCOLOR" : [255, 255, 255, 255],
+            "EXTRA" : 12
+        },
+
+        "DAGP": {
+            "TITLE" : "DAGPENGER",
+            "FILLCOLOR" : [255, 255, 255, 255],
+            "EXTRA" : 12
+        },
+
+        "TILSTOVER": {
+            "TITLE" : "?TILSTOVER",
+            "FILLCOLOR" : [255, 255, 255, 255],
+            "EXTRA" : 12
+        },
+
+        "TILSTRAMME": {
+            "TITLE" : "?TILSTRAMME",
+            "FILLCOLOR" : [255, 255, 255, 255],
+            "EXTRA" : 12
+        },
+
+        "MOBIL": {
+            "TITLE" : "MOBILITETSLØSNING",
+            "FILLCOLOR" : [255, 255, 255, 255],
+            "EXTRA" : 12
+        },
+
+        "FEILUTBE": {
+            "TITLE" : "FEILUTBETALING",
+            "FILLCOLOR" : [255, 255, 255, 255],
+            "EXTRA" : 12
+        },
+
+        "SANKSJON": {
+            "TITLE" : "?SANKSJON",
+            "FILLCOLOR" : [255, 255, 255, 255],
+            "EXTRA" : 12
+        }
+    }
+}
 
 
-
-
-AAREG
-NY
-AA
-ARBEID
-MELD
-ATTF
-INDIV
-DAGP
-TILSTOVER
-TILSTRAMME
-MOBIL
-FEILUTBE
-SANKSJON

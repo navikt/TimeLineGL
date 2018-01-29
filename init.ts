@@ -1,4 +1,5 @@
 
+
 let g_shader_source : string[] = [];
 
 let g_gl : any;
@@ -13,14 +14,16 @@ let g_json_raw : any[] = [];
 
 let g_nCompleted : number = 0;
 
-let viewport : ViewPort;
+let g_configuration : Configuration;
 
-let radar : Radar;
+let g_viewport : ViewPort;
 
-let detail : Detail;
+let g_radar : Radar;
 
-let text_renderer : TextRenderer;
-let rectangles : Rectangles;
+let g_detail : Detail;
+
+let g_text_renderer : TextRenderer;
+let g_rectangles : Rectangles;
 
 let g_node1 : Text;
 let g_node2 : Text;
@@ -31,9 +34,9 @@ let time_delta : number = 1;
 
 let g_enable_detail_box: boolean = false;
 
-const g_data_source: string = "data3";
-const g_max_chunk: number = 29;
+let g_config_json: string = "";
 
+let g_data_source : string = "data3";
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -55,9 +58,9 @@ function g_renderHTML(): void {
 
   time += time_delta;
 
-  const nPersons : number = rectangles.getNumberOfPersons();
+  const nPersons : number = g_rectangles.getNumberOfPersons();
 
-  const nRows : number = viewport.get_row_max() - viewport.get_row_min();
+  const nRows : number = g_viewport.get_row_max() - g_viewport.get_row_min();
 
   const
     value1 : string = nPersons.toFixed(0),
@@ -101,10 +104,27 @@ function g_setupHTML(): void {
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-//     transferComplete
+//     configComplete
 //
 
-function transferComplete(evt:any): void {
+function configComplete(evt:any): void {
+
+  unused(evt);
+
+  Logger.log(1, "The config load is complete");
+
+  g_configuration = new Configuration(JSON.parse(g_xmlhttp.response));
+
+  loadData();
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//     dataChunkComplete
+//
+
+function dataChunkComplete(evt:any): void {
 
     unused(evt);
 
@@ -112,7 +132,7 @@ function transferComplete(evt:any): void {
 
     g_json_raw[g_loading_state] = JSON.parse(g_xmlhttp.response);
 
-    const nLoadChunks: number = g_max_chunk;
+    const nLoadChunks: number = g_configuration.GetNumberOfChunks();
 
     if (g_loading_state < (nLoadChunks -1)) {
       g_loading_state++;
@@ -140,6 +160,24 @@ function updateProgress(oEvent:any): void {
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
+//     loadConfig
+//
+
+function loadConfig(): void {
+  g_xmlhttp = new XMLHttpRequest();
+
+  g_xmlhttp.addEventListener("load", configComplete);
+
+  const data_url : string = g_data_source + "/conf.json";
+
+  g_xmlhttp.open("GET", data_url, true);
+  g_xmlhttp.send();
+
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
 //     loadData
 //
 
@@ -147,10 +185,12 @@ function loadData(): void {
 
     g_xmlhttp = new XMLHttpRequest();
 
-    g_xmlhttp.addEventListener("load", transferComplete);
+    g_xmlhttp.addEventListener("load", dataChunkComplete);
     g_xmlhttp.addEventListener("progress", updateProgress);
 
-    const data_url : string = g_data_source + "/data" + g_loading_state + ".json";
+    const basename : string = g_configuration.GetBaseName();
+
+    const data_url : string = g_data_source + "/" + basename + g_loading_state + ".json";
 
 
     g_xmlhttp.onreadystatechange = function (): void {
@@ -196,7 +236,7 @@ function main(): void {
 //
 
 function main2(): void {
-  loadData();
+  loadConfig();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -276,27 +316,28 @@ function main5(): void {
   const startYear: number = 1995;
   const endYear: number = 2022;
 
-  viewport = new ViewPort(g_gl, canvas, g_render, startYear, endYear);
+  g_viewport = new ViewPort(g_gl, canvas, g_render, startYear, endYear);
 
-  radar = new Radar(g_gl);
+  g_radar = new Radar(g_gl);
 
-  text_renderer = new TextRenderer(g_gl, viewport);
+  g_text_renderer = new TextRenderer(g_gl, g_viewport);
 
-  rectangles = new Rectangles(g_gl, viewport);
+  g_rectangles = new Rectangles(g_gl, g_configuration, g_viewport);
 
-  detail = new Detail(g_gl);
+  g_detail = new Detail(g_gl);
 
-  radar.setup(g_shader_source[4], g_shader_source[5]);
+  g_radar.setup(g_shader_source[4], g_shader_source[5]);
 
-  detail.setup(g_shader_source[6], g_shader_source[7]);
+  g_detail.setup(g_shader_source[6], g_shader_source[7]);
 
-  text_renderer.setup(g_text_image, g_shader_source[2], g_shader_source[3]);
+  g_text_renderer.setup(g_text_image, g_shader_source[2], g_shader_source[3]);
 
-  rectangles.setup(g_shader_source[0], g_shader_source[1], g_json_raw, g_max_chunk);
+  const max_chunk : number = g_configuration.GetNumberOfChunks();
+
+  g_rectangles.setup(g_shader_source[0], g_shader_source[1], g_json_raw, max_chunk);
 
   requestAnimationFrame(g_render);
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -326,15 +367,15 @@ function g_render(now : number): void {
     const out_value1 : number = (sin_value1 + 1) / 2.0;
     const out_value2 : number = (sin_value2 + 1) / 2.0;
 
-    viewport.SetVizFactor1(out_value1);
-    viewport.SetVizFactor2(out_value2);
+    g_viewport.SetVizFactor1(out_value1);
+    g_viewport.SetVizFactor2(out_value2);
   }
 
   g_renderHTML();
 
 
-  viewport.resize();
-  viewport.animate();
+  g_viewport.resize();
+  g_viewport.animate();
 
   // tell WebGL how to convert from clip space to pixels
 
@@ -347,40 +388,40 @@ function g_render(now : number): void {
   g_gl.blendFunc(g_gl.SRC_ALPHA, g_gl.ONE_MINUS_SRC_ALPHA);
 
   const
-    x_factor : number = g_gl.canvas.width / viewport.WORLD_WIDTH;
+    x_factor : number = g_gl.canvas.width / g_viewport.WORLD_WIDTH;
 
   const
-    y : number = viewport.getOffsetY();
+    y : number = g_viewport.getOffsetY();
 
   const
-    nFirstRow : number = viewport.get_row_min();
+    nFirstRow : number = g_viewport.get_row_min();
 
   const
-    nLastRow: number = viewport.get_row_max();
+    nLastRow: number = g_viewport.get_row_max();
 
   const
-    rVizFactor_1: number = viewport.GetVizFactor1();
+    rVizFactor_1: number = g_viewport.GetVizFactor1();
 
   const
-    rVizFactor_2: number = viewport.GetVizFactor2();
+    rVizFactor_2: number = g_viewport.GetVizFactor2();
 
-  rectangles.render(y, viewport.y_scale, nFirstRow, nLastRow, g_isYearLines, x_factor, rVizFactor_1, rVizFactor_2);
+  g_rectangles.render(y, g_viewport.y_scale, nFirstRow, nLastRow, g_isYearLines, x_factor, rVizFactor_1, rVizFactor_2);
 
-  text_renderer.render();
-
-  const
-    nRows : number = rectangles.getNumberOfPersons();
-
-  radar.render(nRows, nFirstRow, nLastRow);
+  g_text_renderer.render();
 
   const
-    mouse_y : number = viewport.getCurrentY();
+    nRows : number = g_rectangles.getNumberOfPersons();
+
+  g_radar.render(nRows, nFirstRow, nLastRow);
+
+  const
+    mouse_y : number = g_viewport.getCurrentY();
 
   const
     nRowsDisplayed: number = (nLastRow - nFirstRow) > 1 ? (nLastRow - nFirstRow) : 1;
 
   if (g_enable_detail_box && nRowsDisplayed < 20 && nRowsDisplayed > 3) {
-    detail.render(nFirstRow, nLastRow);
+    g_detail.render(nFirstRow, nLastRow);
   }
 
   requestAnimationFrame(g_render);
