@@ -5,8 +5,6 @@ let g_gl : any;
 
 let g_text_image : HTMLImageElement;
 
-let is_index1 : boolean = true;
-
 let g_isYearLines : boolean = true;
 
 let g_xmlhttp : XMLHttpRequest;
@@ -24,7 +22,6 @@ let detail : Detail;
 let text_renderer : TextRenderer;
 let rectangles : Rectangles;
 
-
 let g_node1 : Text;
 let g_node2 : Text;
 let g_node3 : Text;
@@ -34,18 +31,9 @@ let time_delta : number = 1;
 
 let g_enable_detail_box: boolean = false;
 
-///////////////////////////////////////////////////////////////////////////////////////
-//
-//     g_GetMaxChunk
-//
+const g_data_source: string = "data3";
+const g_max_chunk: number = 29;
 
-function g_GetMaxChunk(): number {
-  if (is_index1) {
-    return 5;
-  } else {
-    return 7;
-  }
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -124,7 +112,7 @@ function transferComplete(evt:any): void {
 
     g_json_raw[g_loading_state] = JSON.parse(g_xmlhttp.response);
 
-    const nLoadChunks: number = g_GetMaxChunk();
+    const nLoadChunks: number = g_max_chunk;
 
     if (g_loading_state < (nLoadChunks -1)) {
       g_loading_state++;
@@ -162,8 +150,7 @@ function loadData(): void {
     g_xmlhttp.addEventListener("load", transferComplete);
     g_xmlhttp.addEventListener("progress", updateProgress);
 
-    const data_url : string = is_index1? ("data/data" + g_loading_state + ".json"):
-                                         ("data2/data" + g_loading_state + ".json");
+    const data_url : string = g_data_source + "/data" + g_loading_state + ".json";
 
 
     g_xmlhttp.onreadystatechange = function (): void {
@@ -199,8 +186,6 @@ function loadImage(): void {
 
 function main(): void {
   const overlay : HTMLElement | null = document.getElementById("overlay");
-
-  is_index1 = (overlay != null);
 
   loadImage();
 }
@@ -288,15 +273,16 @@ function main5(): void {
     return;
   }
 
-  viewport = new ViewPort(g_gl, canvas, g_render);
+  const startYear: number = 1995;
+  const endYear: number = 2022;
+
+  viewport = new ViewPort(g_gl, canvas, g_render, startYear, endYear);
 
   radar = new Radar(g_gl);
 
-  const startYear: number = is_index1? 1995: 2008;
+  text_renderer = new TextRenderer(g_gl, viewport);
 
-  text_renderer = new TextRenderer(g_gl, startYear);
-
-  rectangles = new Rectangles(g_gl);
+  rectangles = new Rectangles(g_gl, viewport);
 
   detail = new Detail(g_gl);
 
@@ -306,13 +292,10 @@ function main5(): void {
 
   text_renderer.setup(g_text_image, g_shader_source[2], g_shader_source[3]);
 
-  rectangles.setup(g_shader_source[0], g_shader_source[1], viewport.row_size, startYear,
-                              is_index1, g_json_raw, g_GetMaxChunk(), viewport.WORLD_WIDTH);
+  rectangles.setup(g_shader_source[0], g_shader_source[1], g_json_raw, g_max_chunk);
 
   requestAnimationFrame(g_render);
 }
-
-
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -354,6 +337,7 @@ function g_render(now : number): void {
   viewport.animate();
 
   // tell WebGL how to convert from clip space to pixels
+
   g_gl.viewport(0, 0, g_gl.canvas.width, g_gl.canvas.height);
   g_gl.clearColor(0, 0, 0, 0);
   g_gl.clear(g_gl.COLOR_BUFFER_BIT);

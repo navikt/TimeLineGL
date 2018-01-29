@@ -31,12 +31,15 @@ class ViewPort {
     viz_factor1 : number = 0;
     viz_factor2 : number = 0;
 
+    start_year: number  = 0;
+    end_year: number  = 0;
+
     gl : any;
     canvas : HTMLCanvasElement;
 
     cbRender : FrameRequestCallback;
 
-    constructor(gl : any, canvas : HTMLCanvasElement, cbRender : FrameRequestCallback) {
+    constructor(gl : any, canvas : HTMLCanvasElement, cbRender : FrameRequestCallback, start_year : number, end_year : number) {
 
         this.gl = gl;
         this.canvas = canvas;
@@ -51,6 +54,17 @@ class ViewPort {
         window.addEventListener("keydown", this.handleKeyDown, false);
 
         this.cbRender = cbRender;
+        this.start_year = start_year;
+        this.end_year = end_year;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    //     resizeEventHandler
+    //
+
+    getXFromTime(time: number): number {
+        return GLUtils.static_get_x_from_time(this.start_year, this.end_year, this.WORLD_WIDTH, time);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////

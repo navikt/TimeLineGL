@@ -21,15 +21,14 @@ class Rectangles {
     bar_thickness : number = 14;
     nRectangleCount : number = 0;
 
-    row_size : number;
 
     person_offset : Int32Array;
 
     nMaxChunk : number;
     json_raw : any[] = [];
 
-    json_mode_old : boolean;
-    start_year: number;
+
+    viewport : ViewPort;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -37,9 +36,10 @@ class Rectangles {
     //     constructor
     //
 
-    constructor(gl : any) {
+    constructor(gl : any, viewport : ViewPort) {
 
         this.gl = gl;
+        this.viewport = viewport;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -79,13 +79,13 @@ class Rectangles {
     //     build_bar_rectangle
     //
 
-    build_bar_rectangle(f : Float32Array, iOffset : number, begin : number, end : number, color : number, world_width : number): void {
+    build_bar_rectangle(f : Float32Array, iOffset : number, begin : number, end : number, color : number): void {
 
-        const x1 : number = GLUtils.static_get_x_from_time(this.GetDisplayStartYear(), world_width, begin);
-        const x2 : number = GLUtils.static_get_x_from_time(this.GetDisplayStartYear(), world_width, end);
+        const x1 : number = this.viewport.getXFromTime(begin);
+        const x2 : number = this.viewport.getXFromTime(end);
 
-        const y1 : number = 0 * this.row_size;
-        const y2 : number = this.getNumberOfPersons() * this.row_size;
+        const y1 : number = 0 * this.viewport.row_size;
+        const y2 : number = this.getNumberOfPersons() * this.viewport.row_size;
 
         this.write_rectangle(f, iOffset, x1, y1, x2, y2, color);
     }
@@ -105,12 +105,12 @@ class Rectangles {
     //
 
     build_interval_rectangle(f : Float32Array, iOffset : number, id : number,
-                      begin : number, end : number, color : number, w: number, nSplits : number): void {
+                      begin : number, end : number, color : number, nSplits : number): void {
 
-      const x1 : number = GLUtils.static_get_x_from_time(this.GetDisplayStartYear(), w, begin);
-      const x2 : number = GLUtils.static_get_x_from_time(this.GetDisplayStartYear(), w, end);
+      const x1 : number = this.viewport.getXFromTime(begin);
+      const x2 : number = this.viewport.getXFromTime(end);
 
-      const y1_min : number = id * this.row_size;
+      const y1_min : number = id * this.viewport.row_size;
       const y2_max : number = y1_min + this.rectangle_thickness;
 
       if (nSplits >= 2) {
@@ -215,19 +215,10 @@ class Rectangles {
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
-    // c     GetDisplayStartYear
-    //
-
-    GetDisplayStartYear(): number {
-      return this.start_year;
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////////////
-    //
     //     buildGLFromData
     //
 
-    buildGLFromData(world_width : number): void {
+    buildGLFromData(): void {
 
       const
         nPrimitives : number = this.getNumberOfRectangles();
@@ -257,144 +248,95 @@ class Rectangles {
         let
           color : number = 0.91;
 
-        this.build_bar_rectangle(cpu_data, iOffset, time, time + this.bar_thickness, color, world_width);
+        this.build_bar_rectangle(cpu_data, iOffset, time, time + this.bar_thickness, color);
 
         iOffset += nElementsPerRectangle;
 
       }
 
 
-      if (!this.json_mode_old) {
+      var all_types: any = [];
 
-        var all_types: any = [];
+      for (let iChunk : number = 0; iChunk < this.nMaxChunk; iChunk++) {
 
+        const
+          j : any = this.json_raw[iChunk];
 
-        for (let iChunk : number = 0; iChunk < this.nMaxChunk; iChunk++) {
+        var keys: any = [];
 
-          const
-            j : any = this.json_raw[iChunk];
-
-          var keys: any = [];
-
-          for(let k in j) {
-            if (j.hasOwnProperty(k)) {
-              keys.push(k);
-              // code here
-            }
-          }
-
-          const n: number = keys.length;
-
-          for (let iKey : number = 0; iKey < n; iKey++) {
-
-            const id: number = keys[iKey];
-
-            this.person_offset[id] = iOffset / nElementsPerVertex;
-
-            const time0 : number = (1995 - 1970) * 365.242199;
-            const time1 : number = (2018 - 1970) * 365.242199;
-
-            this.build_interval_rectangle(cpu_data, iOffset, id, time0, time1, 0.8, world_width, 0);
-
-            iOffset += nElementsPerRectangle;
-
-            let person: any = j[id];
-            var types: any = [];
-
-            for(let k in person) {
-              if (person.hasOwnProperty(k)) {
-                types.push(k);
-              }
-            }
-
-            for (let type in types) {
-              if (!types.hasOwnProperty(type)) {
-                continue;
-              }
-
-              if (all_types.indexOf(types[type]) >= 0) {
-                // already contained
-              } else {
-                all_types.push(types[type]);
-              }
-
-              let acIntervalData: any = person[types[type]];
-
-              const nIntervalData: number = acIntervalData.length;
-
-              // c Logger.log(1, "id=" + id + "type=" + type + "[" + types[type] + "] #intervals = " + nIntervalData/2);
-
-              for (let iIntervalData : number = 0; iIntervalData < nIntervalData; iIntervalData+=2) {
-                const begin: number = acIntervalData[iIntervalData + 0];
-                const end: number =   acIntervalData[iIntervalData + 1];
-
-                const color: number = this.GetRectangleColorFromType(types[type]);
-
-
-                this.build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, world_width, 3);
-
-                iOffset += nElementsPerRectangle;
-
-
-                // c Logger.log(1, "min=" + acIntervalData[iIntervalData + 0] + ", max=" + acIntervalData[iIntervalData +1]);
-              }
-            }
+        for(let k in j) {
+          if (j.hasOwnProperty(k)) {
+            keys.push(k);
+            // code here
           }
         }
 
-        Logger.log(1, "Elements of : " + all_types.length + " type(s) found");
+        const n: number = keys.length;
 
-      } else {
-        for (let iChunk : number = 0; iChunk < this.nMaxChunk; iChunk++) {
+        for (let iKey : number = 0; iKey < n; iKey++) {
 
-        let
-          i : any = this.json_raw[iChunk];
-
-        Logger.log(1, "Elements found : " + i.length);
-
-        for (let iPerson : number = 0; iPerson < i.length; iPerson++) {
-
-          const q : any = i[iPerson];
-          const id : number = q.id;
-          const events : any = q.E;
-          const nEvents : number = events.length;
+          const id: number = keys[iKey];
 
           this.person_offset[id] = iOffset / nElementsPerVertex;
 
           const time0 : number = (1995 - 1970) * 365.242199;
           const time1 : number = (2018 - 1970) * 365.242199;
 
-          this.build_interval_rectangle(cpu_data, iOffset, id, time0, time1, 0.8, world_width, 0);
+          this.build_interval_rectangle(cpu_data, iOffset, id, time0, time1, 0.8, 0);
 
           iOffset += nElementsPerRectangle;
 
-          for (let iEvent : number = 0; iEvent < nEvents; iEvent++) {
-            const begin : number = events[iEvent];
-            const end : number = begin - 14;
-            const color : number = 0.6;
+          let person: any = j[id];
+          var types: any = [];
 
-            this.build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, world_width, 0);
-
-            iOffset += nElementsPerRectangle;
-
+          for(let k in person) {
+            if (person.hasOwnProperty(k)) {
+              types.push(k);
+            }
           }
 
-          const aa_intervals : any[] = q.AA;
-          const nAA : number = aa_intervals.length;
+          for (let type in types) {
+            if (!types.hasOwnProperty(type)) {
+              continue;
+            }
+
+            if (all_types.indexOf(types[type]) >= 0) {
+              // already contained
+            } else {
+              all_types.push(types[type]);
+            }
+
+            let acIntervalData: any = person[types[type]];
+
+            const nIntervalData: number = acIntervalData.length;
+
+            // c Logger.log(1, "id=" + id + "type=" + type + "[" + types[type] + "] #intervals = " + nIntervalData/2);
+
+            for (let iIntervalData : number = 0; iIntervalData < nIntervalData; iIntervalData+=2) {
+              const begin: number = acIntervalData[iIntervalData + 0];
+              const end: number =   acIntervalData[iIntervalData + 1];
+
+              const color: number = this.GetRectangleColorFromType(types[type]);
+
+              this.build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, 0);
+
+              iOffset += nElementsPerRectangle;
 
 
-          for (let iAA : number = 0; iAA < nAA; iAA += 2) {
-            const begin : number = aa_intervals[iAA + 0];
-            const end   : number = aa_intervals[iAA + 1];
-            const color : number = 0.3;
-
-            this.build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, world_width, 0);
-
-            iOffset += nElementsPerRectangle;
+              // c Logger.log(1, "min=" + acIntervalData[iIntervalData + 0] + ", max=" + acIntervalData[iIntervalData +1]);
+            }
           }
         }
       }
-    }
+
+      Logger.log(1, "Elements of : " + all_types.length + " type(s) found");
+
+      for (let type in all_types) {
+        if (!all_types.hasOwnProperty(type)) {
+          continue;
+        }
+        Logger.log(1, "   " + all_types[type]);
+      }
       this.nRectangleCount = nPrimitives;
       this.gl.bufferData(this.gl.ARRAY_BUFFER, cpu_data, this.gl.STATIC_DRAW);
     }
@@ -409,35 +351,23 @@ class Rectangles {
       let
         nPersons : number = 0;
 
-      if (this.json_mode_old) {
+      for (let iChunk : number = 0; iChunk < this.nMaxChunk; iChunk++) {
 
-        for (let iChunk : number = 0; iChunk < this.nMaxChunk; iChunk++) {
+        const
+          j : any = this.json_raw[iChunk];
 
-          let
-            i : any = g_json_raw[iChunk];
+        var keys: any = [];
 
-            nPersons += i.length;
-        }
-      } else {
-
-        for (let iChunk : number = 0; iChunk < this.nMaxChunk; iChunk++) {
-
-          const
-            j : any = this.json_raw[iChunk];
-
-          var keys: any = [];
-
-          for(let k in j) {
-            if (j.hasOwnProperty(k)) {
-              keys.push(k);
-              // code here
-            }
+        for(let k in j) {
+          if (j.hasOwnProperty(k)) {
+            keys.push(k);
+            // code here
           }
-
-          const n: number = keys.length;
-
-          nPersons += n;
         }
+
+        const n: number = keys.length;
+
+        nPersons += n;
       }
 
       return nPersons;
@@ -475,62 +405,41 @@ class Rectangles {
 
       // intervals
 
-      if (this.json_mode_old) {
+      for (let iChunk : number = 0; iChunk < this.nMaxChunk; iChunk++) {
 
-        for (let iChunk : number = 0; iChunk < this.nMaxChunk; iChunk++) {
+        const
+          j : any = this.json_raw[iChunk];
 
-            let
-            i : any[] = g_json_raw[iChunk];
+        var keys: any = [];
 
-            for (let iPerson : number = 0; iPerson < i.length; iPerson++) {
-
-            const q : any = i[iPerson];
-
-            const nEvents : number = q.E.length;
-            const nAA : number = q.AA.length;
-
-            nRectangles += nEvents;
-            nRectangles += nAA;
-            }
+        for(let k in j) {
+          if (j.hasOwnProperty(k)) {
+            keys.push(k);
+            // code here
+          }
         }
 
-      } else {
-        for (let iChunk : number = 0; iChunk < this.nMaxChunk; iChunk++) {
+        for (let iKey: number = 0; iKey < keys.length; iKey++) {
 
-          const
-            j : any = this.json_raw[iChunk];
+          const id: number = keys[iKey];
 
-          var keys: any = [];
+          let person: any = j[id];
+          var types: any = [];
 
-          for(let k in j) {
-            if (j.hasOwnProperty(k)) {
-              keys.push(k);
-              // code here
+          for(let k in person) {
+            if (person.hasOwnProperty(k)) {
+              types.push(k);
             }
           }
 
-          for (let iKey: number = 0; iKey < keys.length; iKey++) {
-
-            const id: number = keys[iKey];
-
-            let person: any = j[id];
-            var types: any = [];
-
-            for(let k in person) {
-              if (person.hasOwnProperty(k)) {
-                types.push(k);
-              }
+          for (let type in types) {
+            if (!types.hasOwnProperty(type)) {
+              continue;
             }
 
-            for (let type in types) {
-              if (!types.hasOwnProperty(type)) {
-                continue;
-              }
-
-              let acIntervalData: any = person[types[type]];
-              const nIntervalData: number = acIntervalData.length;
-              nRectangles += nIntervalData/2;
-            }
+            let acIntervalData: any = person[types[type]];
+            const nIntervalData: number = acIntervalData.length;
+            nRectangles += nIntervalData/2;
           }
         }
       }
@@ -543,15 +452,10 @@ class Rectangles {
     //     setup
     //
 
-    setup(vertex_source : string, fragment_source : string, row_size : number, start_year: number, json_mode_old: boolean,
-                    json_raw :  any[], nMaxChunk : number, world_width : number): void {
+    setup(vertex_source : string, fragment_source : string, json_raw :  any[], nMaxChunk : number,): void {
 
         this.nMaxChunk = nMaxChunk;
         this.json_raw = json_raw;
-        this.json_mode_old = json_mode_old;
-        this.start_year = start_year;
-
-        this.row_size = row_size;
 
         const vertexShader : any = GLUtils.createShader(this.gl, this.gl.VERTEX_SHADER, vertex_source);
         const fragmentShader : any = GLUtils.createShader(this.gl, this.gl.FRAGMENT_SHADER, fragment_source);
@@ -572,8 +476,7 @@ class Rectangles {
 
         this.buffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
-        this.buildGLFromData(world_width);
-
+        this.buildGLFromData();
 
         // create a vertex array object (attribute state)
         this.vao = this.gl.createVertexArray();

@@ -25,11 +25,11 @@ class TextRenderer {
 
   nRectangleCount : number;
 
-  nStartYear: number;
+  viewport : ViewPort;
 
-  constructor(gl : any, startYear: number) {
+  constructor(gl : any, viewport : ViewPort) {
       this.gl = gl;
-      this.nStartYear = startYear;
+      this.viewport = viewport;
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////
@@ -124,8 +124,10 @@ class TextRenderer {
       const
         time : number = (iYear - 1970.35) * 365.242199;
 
+      // !
+
       const
-        x0 : number = GLUtils.static_get_x_from_time(this.nStartYear, Defines.DEF_WIDTH, time),
+        x0 : number = GLUtils.static_get_x_from_time(this.viewport.start_year, this.viewport.end_year, Defines.DEF_WIDTH, time),
         y0 : number = y,
         x1 : number = x0 + size_x,
         y1 : number = y0 + size_y;

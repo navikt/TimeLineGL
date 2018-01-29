@@ -69,11 +69,11 @@ static getUniformLocation(gl : any, p : number, name : string, isWarn : boolean)
 //     get_x_from_time
 //
 
-static static_get_x_from_time(start_year: number, w : number, time: number): number {
+static static_get_x_from_time(start_year: number, end_year: number, w : number, time: number): number {
 
   const start_time: number = (start_year - 1970) * 365.242199;
 
-  const end_time: number = (2018 - 1970) * 365.242199;
+  const end_time: number = (end_year - 1970) * 365.242199;
 
   const a: number = w / (end_time - start_time);
 
