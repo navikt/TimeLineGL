@@ -1,5 +1,33 @@
 
 
+// https://stackoverflow.com/questions/19695658/emulating-palette-based-graphics-in-webgl-v-s-canvas-2d
+
+
+/*
+
+  Colour from palette
+
+  Originally retreived from image (singel channel alpha)
+  float index = texture2D(u_image, v_texcoord).a * 255.0;
+
+  Gives float 0..255.
+
+  And use that value to look up a color in the palette:
+
+  gl_FragColor = texture2D(u_palette, vec2((index + 0.5) / 256.0, 0.5));
+
+*/
+
+/*
+  Setup a palette.
+
+  // Value filtering makes no sense for palette lookups:
+
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+*/
+
 class Rectangles {
 
     gl : any;
@@ -21,7 +49,6 @@ class Rectangles {
     bar_thickness : number = 14;
     nRectangleCount : number = 0;
 
-
     person_offset : Int32Array;
 
     nMaxChunk : number;
@@ -42,6 +69,48 @@ class Rectangles {
         this.gl = gl;
         this.viewport = viewport;
         this.configuration = configuration;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    //     setPaletteColor
+    //
+
+    static setPaletteColor(palette: Uint8Array, index: number, r: number, g: number, b: number, a: number): void {
+      palette[index * 4 + 0] = r;
+      palette[index * 4 + 1] = g;
+      palette[index * 4 + 2] = b;
+      palette[index * 4 + 3] = a;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //     createPaletteTexture
+    //
+
+    createPaletteTexture(): void {
+
+      const gl:any = this.gl;
+
+      const palette: Uint8Array = new Uint8Array(256 * 4);
+
+      Rectangles.setPaletteColor(palette, 1, 255, 0, 0, 255); // red
+      Rectangles.setPaletteColor(palette, 2, 0, 255, 0, 255); // green
+      Rectangles.setPaletteColor(palette, 3, 0, 0, 255, 255); // blue
+
+      gl.activeTexture(this.gl.TEXTURE1);
+
+      const paletteTex:any = gl.createTexture();
+
+      gl.bindTexture(gl.TEXTURE_2D, paletteTex);
+
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+      this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, 256, 1, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, palette);
+
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
