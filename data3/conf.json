@@ -10,49 +10,49 @@
 
         "AAREG": {
             "TITLE" : "AAREG",
-            "FILLCOLOR" : [255, 255, 119, 255],
+            "FILLCOLOR" : [0, 255, 0, 100],
             "EXTRA" : 12
         },
 
         "NY": {
             "TITLE" : "FØDT",
-            "FILLCOLOR" : [255, 255, 255, 255],
+            "FILLCOLOR" : [255, 0, 90, 100],
             "EXTRA" : 12
         },
 
         "AA": {
             "TITLE" : "ARBEIDSAVKLARING",
-            "FILLCOLOR" : [255, 255, 255, 255],
+            "FILLCOLOR" : [255, 0, 0, 200],
             "EXTRA" : 12
         },
 
         "ARBEID": {
             "TITLE" : "OPPFØLGING",
-            "FILLCOLOR" : [255, 255, 255, 255],
+            "FILLCOLOR" : [255, 255, 0, 255],
             "EXTRA" : 12
         },
 
         "MELD": {
             "TITLE" : "MELDEKORT",
-            "FILLCOLOR" : [255, 255, 255, 255],
+            "FILLCOLOR" : [0, 0, 255, 155],
             "EXTRA" : 12
         },
 
         "ATTF": {
-            "TITLE" : "ATTFØRING",
-            "FILLCOLOR" : [255, 255, 255, 255],
+            "TITLE" : "ATTFØRING", 
+            "FILLCOLOR" : [128,0, 128, 200],
             "EXTRA" : 12
         },
 
         "INDIV": {
             "TITLE" : "INDIVIDSTØNAD",
-            "FILLCOLOR" : [255, 255, 255, 255],
+            "FILLCOLOR" : [155, 155, 155, 255],
             "EXTRA" : 12
         },
 
         "DAGP": {
             "TITLE" : "DAGPENGER",
-            "FILLCOLOR" : [255, 255, 255, 255],
+            "FILLCOLOR" : [255, 192, 203, 255],
             "EXTRA" : 12
         },
 

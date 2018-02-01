@@ -42,6 +42,8 @@ class Rectangles {
     viz_factor1Location : number;
     viz_factor2Location : number;
 
+    paletteLocation : number;
+
     buffer : number;
     vao : number;
 
@@ -76,12 +78,13 @@ class Rectangles {
     //     setPaletteColor
     //
 
-    static setPaletteColor(palette: Uint8Array, index: number, r: number, g: number, b: number, a: number): void {
-      palette[index * 4 + 0] = r;
-      palette[index * 4 + 1] = g;
-      palette[index * 4 + 2] = b;
-      palette[index * 4 + 3] = a;
+    static setPaletteColor(palette: Uint8Array, index: number, rgba: Array<number>): void {
+      palette[index * 4 + 0] = rgba[0];
+      palette[index * 4 + 1] = rgba[1];
+      palette[index * 4 + 2] = rgba[2];
+      palette[index * 4 + 3] = rgba[3];
     }
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -94,9 +97,18 @@ class Rectangles {
 
       const palette: Uint8Array = new Uint8Array(256 * 4);
 
-      Rectangles.setPaletteColor(palette, 1, 255, 0, 0, 255); // red
-      Rectangles.setPaletteColor(palette, 2, 0, 255, 0, 255); // green
-      Rectangles.setPaletteColor(palette, 3, 0, 0, 255, 255); // blue
+      const paletteToRGBA :  { [id: number] : Array<number> } = this.configuration.GetNumberToColorRGBA();
+
+      for(let key in paletteToRGBA) {
+        if (paletteToRGBA.hasOwnProperty(key)) {
+
+          const paletteID: number = Number(key);
+          const colorRGBA: Array<number> = paletteToRGBA[key];
+
+          Rectangles.setPaletteColor(palette, paletteID, colorRGBA);
+
+        }
+      }
 
       gl.activeTexture(this.gl.TEXTURE1);
 
@@ -268,6 +280,12 @@ class Rectangles {
 
     buildGLFromData(): void {
 
+      const keywordToPalette : { [id: string] : number } = this.configuration.GetKeywordToNumberMap();
+
+      const default_color: string = "SYSTEM";
+
+      const default_color_ID: number = keywordToPalette[default_color];
+
       const
         nPrimitives : number = this.getNumberOfRectangles();
 
@@ -294,7 +312,7 @@ class Rectangles {
         const time : number = (iYear - 1970) * 365.242199;
 
         let
-          color : number = 0.91;
+          color : number = 1.0;
 
         this.build_bar_rectangle(cpu_data, iOffset, time, time + this.bar_thickness, color);
 
@@ -330,7 +348,7 @@ class Rectangles {
           const time0 : number = (1995 - 1970) * 365.242199;
           const time1 : number = (2018 - 1970) * 365.242199;
 
-          this.build_interval_rectangle(cpu_data, iOffset, id, time0, time1, 0.8, 0);
+          this.build_interval_rectangle(cpu_data, iOffset, id, time0, time1, default_color_ID, 0);
 
           iOffset += nElementsPerRectangle;
 
@@ -364,12 +382,14 @@ class Rectangles {
               const begin: number = acIntervalData[iIntervalData + 0];
               const end: number =   acIntervalData[iIntervalData + 1];
 
+              /*
               const config_value: Array<number> = this.configuration.GetRGBAForType(types[type]);
 
-              Logger.log(1, "Type " + types[type] + "Received color (RGBA) = (" + config_value[0] + ", " + config_value[1]
+              Logger.log(0, "Type " + types[type] + "Received color (RGBA) = (" + config_value[0] + ", " + config_value[1]
                                                     + ", " + config_value[2] + ", " + config_value[3] + ")");
+              */
 
-              const color: number = this.GetRectangleColorFromType(types[type]);
+              const color: number = keywordToPalette[types[type]];
 
               this.build_interval_rectangle(cpu_data, iOffset, id, begin, end, color, 0);
 
@@ -550,6 +570,10 @@ class Rectangles {
         this.gl.vertexAttribPointer(
             this.positionAttributeLocation, size, type, normalize, stride, offset);
 
+
+        this.createPaletteTexture();
+
+        this.paletteLocation = GLUtils.getUniformLocation(this.gl, this.program, "u_palette", true);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -572,6 +596,8 @@ class Rectangles {
 
       this.gl.uniform1f(this.viz_factor1Location, rVizFactor_1);
       this.gl.uniform1f(this.viz_factor2Location, rVizFactor_2);
+
+      this.gl.uniform1i(this.paletteLocation, 1);
 
       let count : number = this.nRectangleCount * 6;
 

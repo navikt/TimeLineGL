@@ -45,16 +45,7 @@ void main() {
 
   gl_Position = vec4(clipSpace * vec2(1 , -1), 0, 1);
 
-/*
-  if (a_position.x > 0.3 || a_position.x < -0.3)
-  {
-    colorValue = 0.0;
-  }
-  else
-  {
-    colorValue = a_position.z;
-  }
-*/  
+  // Pass thru
   colorValue = a_position.z;
 
 
