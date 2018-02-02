@@ -89,6 +89,12 @@ class Configuration {
 
     keyID++;
 
+    const invis_key: string = "INVISIBLE";
+    this.keywordToNumber[invis_key] = keyID;
+    this.numberToColorRGBA[keyID] = new Array(0, 0, 0, 0);
+
+    keyID++;
+
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////

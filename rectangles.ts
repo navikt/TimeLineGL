@@ -282,7 +282,7 @@ class Rectangles {
 
       const keywordToPalette : { [id: string] : number } = this.configuration.GetKeywordToNumberMap();
 
-      const default_color: string = "SYSTEM";
+      const default_color: string = "INVISIBLE";
 
       const default_color_ID: number = keywordToPalette[default_color];
 
@@ -376,18 +376,22 @@ class Rectangles {
 
             const nIntervalData: number = acIntervalData.length;
 
-            // c Logger.log(1, "id=" + id + "type=" + type + "[" + types[type] + "] #intervals = " + nIntervalData/2);
+            for (let iIntervalData : number = 0; iIntervalData < nIntervalData; iIntervalData +=2) {
 
-            for (let iIntervalData : number = 0; iIntervalData < nIntervalData; iIntervalData+=2) {
-              const begin: number = acIntervalData[iIntervalData + 0];
-              const end: number =   acIntervalData[iIntervalData + 1];
+              let begin: number = acIntervalData[iIntervalData + 0];
+              let end: number =   acIntervalData[iIntervalData + 1];
 
-              /*
-              const config_value: Array<number> = this.configuration.GetRGBAForType(types[type]);
+              if (types[type] === "NY") {
 
-              Logger.log(0, "Type " + types[type] + "Received color (RGBA) = (" + config_value[0] + ", " + config_value[1]
-                                                    + ", " + config_value[2] + ", " + config_value[3] + ")");
-              */
+                // temporary work around awaiting NY=>AKTIV (18-67)
+                const birth: number = begin;
+
+                const year18: number = birth + 18 * 365.242199;
+                const year67: number = birth + 67 * 365.242199;
+
+                begin = year18;
+                end = year67;
+              }
 
               const color: number = keywordToPalette[types[type]];
 

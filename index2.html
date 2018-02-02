@@ -22,8 +22,8 @@
         }
         #overlay2 {
             position: absolute;
-            left: 40px;
-            top: 10px;
+            left: 70px;
+            top: 90px;
             background-color: rgba(1,1,1,0.5);    
             color: white;
             font-family: monospace;
@@ -31,6 +31,10 @@
             border-radius: 0em;
             border: 2px solid #f00;
             text-shadow: 0px 0px 5px white;
+        }
+
+        #Arbeid_AAREG {
+            color: rgb(0, 255, 0);
         }
 
         #Arbeidsavklaring_AA {
@@ -41,7 +45,7 @@
             color: rgb(255,255,0);
         }
 
-        #INDIVID {
+        #INDIV {
             color: rgb(255,128,0);
         }
         
@@ -51,6 +55,18 @@
 
         #DAGP {
             color: rgb(255,192,203);
+        }
+
+        #MELD {
+            color: rgb(0,0,255);
+        }
+
+        #TILSTOVER {
+            color: rgb(0, 208, 255);
+        }
+
+        #TILSTRAMME {
+            color: rgb(135, 84, 9);
         }
 
 
@@ -64,12 +80,15 @@
                 <canvas id="c"></canvas>
                 <div id="overlay2">
                   <div> <span id="var3"></span>/<span id="var1"></span></div>
-
-                  <div id="Arbeidsavklaring_AA">ARBEIDSAVKLARING</div>
-                  <div id="Oppfolging_ARBEID">OPPFØLGING</div>
-                  <div id="INDIVID">INDIVIDSTØDNAD</div>
-                  <div id="ATTF">ATTFØRING</div>
+                  <div id ="Arbeid_AAREG">I ARBEID</div>
                   <div id="DAGP">DAGPENGER</div>
+                  <div id="MELD">MELDEKORT</div>
+                  <div id="Arbeidsavklaring_AA">AVKLARING</div>
+                  <div id="Oppfolging_ARBEID">OPPFØLGING</div>
+                  <div id="INDIV">INDIVID</div>
+                  <div id="ATTF">ATTFØRING</div>
+                  <div id="TILSTOVER">TILLEGG</div>
+                  <div id="TILSTRAMME">TILLEGG ARB-SØK</div>
                   
                 </div>
               </div>

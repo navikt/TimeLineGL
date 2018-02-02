@@ -314,7 +314,7 @@ function main5(): void {
   }
 
   const startYear: number = 1995;
-  const endYear: number = 2022;
+  const endYear: number = 2018;
 
   g_viewport = new ViewPort(g_gl, canvas, g_render, startYear, endYear);
 

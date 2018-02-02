@@ -8,21 +8,13 @@ TOOL
 
 * Inertia on motion up/down.
 
-
-
-
-
-
 * Full text support.
-
-
-* Create JSON file for configuration.
 
 * Check security. Permission to run on sensitive data. Confer with three.js
 
 * Check performance on typical production mobile PC.
 
-* Check performance for data on texture apporach.
+* Check performance for data on texture approach.
 
 * Performance read-outs.
 
@@ -36,43 +28,46 @@ TOOL
 
 * Hover/click to highlight functionality.
 
-==> * Filter, w. buttons
+* Filter, w. buttons
 
-==> * Sort, w.buttons
+* Sort. Investigate sorting in gl app. Data left into json/local compute. E.g. Rank number array into dataset.
+
+* Sort/show: Age based or time based.
 
 * Performance on multi-screen, check
 
-* Age. Retired. Young. Entry as adult. 
-
 * Fix scroll outside
 
+* Data representation. Row/interval size et.c. => shader. w. config params for representation. width/height...
 
-
+* gl compute. e.g.: https://github.com/gnonio/gl-compute
 
 
 DATA
 ----
 
-* Alder, folkeregistrert dato (rett fra utland).
+* Fiks: Meldekort.
 
-* AA: Skaff selvstendig n�ringsdrivende
+* Sykemelding, sykefraværstatistikk.
+
+* Permisjon.
+
+* Første gang registrert i Norge.
+
+* Kvinne/ mann.
+
+* Landbakgrunn.
+
+* Innsatsgruppe.
+
+* Formt: 'NY' => YRKESAKTIV PERIODE (18-67). + Fix custom code to handle this now.
+
+* Selvstendige næringsdrivende.
 
 * Lage 'bare' for aktive brukere.
 
-* Legge inn de 800 (elns) i tabellen. (Marker. go to)
-
-* Landbakgrunn
-
 * Ide: Bak om noen til � ha fiktive jobber for � dekke det man vet bare statistisk?
   el: For � g� fra brudd til kontinuitet.
-
-
-
-
-
-
-
-
 
 
 
