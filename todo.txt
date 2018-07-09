@@ -3,6 +3,8 @@
 TOOL
 ----
 
+TEST_EDIT_ANDERS
+
 
 * Flexible horizontal year view.
 
