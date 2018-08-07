@@ -15,6 +15,8 @@ Det er en del logging som kan hentes opp i browserens console.
 
 Applikasjonen søker datafiler i json-format. Data er tidsintervaller pr. ID markert med 'type' - som mappes til en farge.
 
+Det er p.t. vanskelig å få dette opp uten hjelp, men i det minste mulig ved å se på kildekoden. Ta kontakt (se under) ved interesse, så skal vi forsøke å hjelpe.
+
 ---
 
 # Henvendelser
