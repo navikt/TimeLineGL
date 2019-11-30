@@ -13,11 +13,11 @@ class ViewPort {
     row_size : number = 15;
     isDragging : boolean= false;
 
-    x_down : number;
-    y_down : number;
+    x_down : number | undefined;
+    y_down : number | undefined;
 
-    x_current : number;
-    y_current : number;
+    x_current : number | undefined;
+    y_current : number | undefined;
 
     y_scale_optimal : number = 0;
     y_scale_optimal_mouse : number = 0;
@@ -47,7 +47,9 @@ class ViewPort {
         canvas.onmousedown = this.handleMouseDown;
         canvas.onmouseup = this.handleMouseUp;
         canvas.onmousemove = this.handleMouseMove;
-        canvas.onmousewheel = this.handleMouseWheel;
+        
+
+        // canvas.onmousewheel = this.handleMouseWheel;
 
 
         window.addEventListener("resize", this.resizeEventHandler, false);
@@ -126,10 +128,10 @@ class ViewPort {
 
         this.isDragging = false;
 
-        this.offsetX += (this.x_current - this.x_down);
-        this.offsetY += (this.y_current - this.y_down);
+        this.offsetX += (this.x_current! - this.x_down!);
+        this.offsetY += (this.y_current! - this.y_down!);
 
-        Logger.log(1, "'handleMouseUp delta (" + (this.x_current - this.x_down) + "'," + (this.y_current - this.y_down) + "')");
+        Logger.log(1, "'handleMouseUp delta (" + (this.x_current! - this.x_down!) + "'," + (this.y_current! - this.y_down!) + "')");
 
         // requestAnimationFrame(this.cbRender);
     }
@@ -364,7 +366,7 @@ class ViewPort {
     getOffsetY(): number {
 
         if (this.isDragging) {
-            return (this.offsetY + (this.y_current - this.y_down))/ this.y_scale;
+            return (this.offsetY + (this.y_current! - this.y_down!))/ this.y_scale;
         } else {
             return this.offsetY/ this.y_scale;
         }
@@ -376,7 +378,7 @@ class ViewPort {
     //
 
     getCurrentY(): number {
-        return this.y_current;
+        return this.y_current!;
     }
 
 

@@ -33,27 +33,27 @@ class Rectangles {
     gl : any;
 
     program : any;
-    positionAttributeLocation : number;
-    resolutionUniformLocation : number;
-    contentsizeUniformLocation : number;
-    offsetLocation : number;
-    y_scaleLocation : number;
+    positionAttributeLocation : number | undefined;
+    resolutionUniformLocation : number | undefined;
+    contentsizeUniformLocation : number | undefined;
+    offsetLocation : number | undefined;
+    y_scaleLocation : number | undefined;
 
-    viz_factor1Location : number;
-    viz_factor2Location : number;
+    viz_factor1Location : number | undefined;
+    viz_factor2Location : number | undefined;
 
-    paletteLocation : number;
+    paletteLocation : number | undefined;
 
-    buffer : number;
-    vao : number;
+    buffer : number | undefined;
+    vao : number | undefined;
 
     rectangle_thickness : number = 7;
     bar_thickness : number = 14;
     nRectangleCount : number = 0;
 
-    person_offset : Int32Array;
+    person_offset : Int32Array | undefined;
 
-    nMaxChunk : number;
+    nMaxChunk : number | undefined;
     json_raw : any[] = [];
 
     viewport : ViewPort;
@@ -280,6 +280,8 @@ class Rectangles {
 
     buildGLFromData(): void {
 
+  
+
       const keywordToPalette : { [id: string] : number } = this.configuration.GetKeywordToNumberMap();
 
       const default_color: string = "INVISIBLE";
@@ -323,7 +325,11 @@ class Rectangles {
 
       var all_types: any = [];
 
-      for (let iChunk : number = 0; iChunk < this.nMaxChunk; iChunk++) {
+      const max: number = this.nMaxChunk ? this.nMaxChunk : 0
+
+      
+
+      for (let iChunk : number = 0; iChunk < max; iChunk++) {
 
         const
           j : any = this.json_raw[iChunk];
@@ -336,6 +342,7 @@ class Rectangles {
             // code here
           }
         }
+      
 
         const n: number = keys.length;
 
@@ -428,7 +435,9 @@ class Rectangles {
       let
         nPersons : number = 0;
 
-      for (let iChunk : number = 0; iChunk < this.nMaxChunk; iChunk++) {
+      const max : number = this.nMaxChunk? this.nMaxChunk : 0  
+
+      for (let iChunk : number = 0; iChunk < max; iChunk++) {
 
         const
           j : any = this.json_raw[iChunk];
@@ -482,7 +491,9 @@ class Rectangles {
 
       // intervals
 
-      for (let iChunk : number = 0; iChunk < this.nMaxChunk; iChunk++) {
+      const max : number = this.nMaxChunk? this.nMaxChunk : 0  
+
+      for (let iChunk : number = 0; iChunk < max; iChunk++) {
 
         const
           j : any = this.json_raw[iChunk];
@@ -530,6 +541,10 @@ class Rectangles {
     //
 
     setup(vertex_source : string, fragment_source : string, json_raw :  any[], nMaxChunk : number,): void {
+
+        if (!nMaxChunk) {
+
+        }
 
         this.nMaxChunk = nMaxChunk;
         this.json_raw = json_raw;
@@ -614,10 +629,10 @@ class Rectangles {
       count -= offset;
 
       const
-        offset0 : number = this.person_offset[row0];
+        offset0 : number = this.person_offset ? this.person_offset[row0] : 0;
 
       const
-        offset1 : number = this.person_offset[row1];
+        offset1 : number = this.person_offset ? this.person_offset[row1] : 0;
 
       if (offset0 > count) {
         return;

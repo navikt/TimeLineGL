@@ -9,21 +9,21 @@ class Defines {
 
 class TextRenderer {
 
-  program : number;
+  program : number | undefined;
 
-  posAttributeLocation : number;
-  textureAttributeLocation : number;
-  textureLocation : number;
+  posAttributeLocation : number | undefined;
+  textureAttributeLocation : number | undefined;
+  textureLocation : number | undefined;
 
-  resolutionUniformLocation : number;
-  posBuffer : number;
-  texturePosBuffer : number;
+  resolutionUniformLocation : number | undefined;
+  posBuffer : number | undefined;
+  texturePosBuffer : number | undefined;
 
-  vao : number;
-  image : HTMLImageElement;
+  vao : number | undefined;
+  image : HTMLImageElement | undefined;
   gl : any;
 
-  nRectangleCount : number;
+  nRectangleCount : number | undefined;
 
   viewport : ViewPort;
 
@@ -51,7 +51,7 @@ class TextRenderer {
 
       this.gl.uniform1i(this.textureLocation, 0);
 
-      this.gl.drawArrays(this.gl.TRIANGLES, 0, this.nRectangleCount * 6);  // 6 vertices for one rectangle.
+      this.gl.drawArrays(this.gl.TRIANGLES, 0, this.nRectangleCount? this.nRectangleCount * 6: 0);  // 6 vertices for one rectangle.
   }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -149,8 +149,8 @@ class TextRenderer {
     const canvas_h : number = this.gl.canvas.height;
 
     const
-      image_w : number = this.image.width,
-      image_h : number = this.image.height;
+      image_w : number = this.image? this.image.width : 0,
+      image_h : number = this.image? this.image.height : 0;
 
     const
       nImageParts : number = 24;
@@ -164,7 +164,7 @@ class TextRenderer {
 
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.posBuffer);
 
-    const acVertex : Float32Array = new Float32Array(this.nRectangleCount * 12);
+    const acVertex : Float32Array = new Float32Array(this.nRectangleCount? this.nRectangleCount* 12: 0);
 
     const
       image_width_in_pixels : number = image_w,
@@ -176,7 +176,7 @@ class TextRenderer {
 
     const nVertexOffset : number = this.build_vertices(acVertex, x_fac, y_fac, nRowMin);
 
-    if (nVertexOffset !== this.nRectangleCount * 12) {
+    if (nVertexOffset !== (this.nRectangleCount? this.nRectangleCount* 12: 0)) {
       throw new Error("Error building vertices");
     }
 

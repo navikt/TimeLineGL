@@ -1,11 +1,11 @@
 
 class Detail {
-  program : number;
-  posAttribLocation : number;
+  program : number | undefined;
+  posAttribLocation : number | undefined;
 
-  buffer : number;
-  f_data: Float32Array;
-  vao : number;
+  buffer : number | undefined;
+  f_data: Float32Array | undefined;
+  vao : number | undefined;
 
   gl : any;
 
@@ -138,14 +138,14 @@ class Detail {
 
 class Radar {
 
-    program : number;
-    posAttribLocation : number;
+    program : number | undefined;
+    posAttribLocation : number | undefined;
 
-    buffer : number;
+    buffer : number | undefined;
 
-    f_data: Float32Array;
+    f_data: Float32Array | undefined;
 
-    vao : number;
+    vao : number | undefined;
 
     gl : any;
 
@@ -179,22 +179,26 @@ class Radar {
 
       this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
 
-      const f_data : Float32Array = this.f_data;
+      if (this.f_data) {
 
-      f_data[13] = yBottom;
-      f_data[15] = yBottom;
-      f_data[21] = yBottom;
+        const f_data : Float32Array = this.f_data;
 
-      f_data[17] = yTop;
-      f_data[19] = yTop;
-      f_data[23] = yTop;
+        f_data[13] = yBottom;
+        f_data[15] = yBottom;
+        f_data[21] = yBottom;
 
-      this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, f_data, 0, this.f_data.length);
+        f_data[17] = yTop;
+        f_data[19] = yTop;
+        f_data[23] = yTop;
+      
 
-      this.gl.useProgram(this.program);
-      this.gl.bindVertexArray(this.vao);
+        this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, f_data, 0, this.f_data.length);
 
-      this.gl.drawArrays(this.gl.TRIANGLES, 0, 12);
+        this.gl.useProgram(this.program);
+        this.gl.bindVertexArray(this.vao);
+
+        this.gl.drawArrays(this.gl.TRIANGLES, 0, 12);
+      }
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
