@@ -50,7 +50,7 @@ class ViewPort {
         
 
         // canvas.onmousewheel = this.handleMouseWheel;
-
+        window.addEventListener("wheel", this.handleMouseWheel);
 
         window.addEventListener("resize", this.resizeEventHandler, false);
         window.addEventListener("keydown", this.handleKeyDown, false);
@@ -301,6 +301,7 @@ class ViewPort {
         this.y_scale_optimal = y_scale_new;
         this.y_scale_optimal_mouse = y_mouse;
 
+        Logger.log(1, "'handleMouseWheel'");
         // requestAnimationFrame(this.cbRender);
     }
 

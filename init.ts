@@ -312,6 +312,12 @@ function main5(): void {
   if (!g_gl) {
     return;
   }
+  var width = canvas.clientWidth;
+  var height = canvas.clientHeight;
+  
+  canvas.width = width;
+  canvas.height = height;
+
 
   const startYear: number = 1995;
   const endYear: number = 2018;
@@ -379,6 +385,8 @@ function g_render(now : number): void {
 
   // tell WebGL how to convert from clip space to pixels
 
+  
+
   g_gl.viewport(0, 0, g_gl.canvas.width, g_gl.canvas.height);
   g_gl.clearColor(0, 0, 0, 0);
   g_gl.clear(g_gl.COLOR_BUFFER_BIT);
@@ -388,7 +396,8 @@ function g_render(now : number): void {
   g_gl.blendFunc(g_gl.SRC_ALPHA, g_gl.ONE_MINUS_SRC_ALPHA);
 
   const
-    x_factor : number = g_gl.canvas.width / g_viewport.WORLD_WIDTH;
+    x_factor : number = g_gl.canvas.width / g_viewport.WORLD_WIDTH
+    ;
 
   const
     y : number = g_viewport.getOffsetY();

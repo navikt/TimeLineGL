@@ -42,7 +42,7 @@ class Rectangles {
     viz_factor1Location : number | undefined;
     viz_factor2Location : number | undefined;
 
-    paletteLocation : number | undefined;
+    // paletteLocation : number | undefined;
 
     buffer : number | undefined;
     vao : number | undefined;
@@ -556,7 +556,7 @@ class Rectangles {
 
 
         // look up where the vertex data needs to go.
-        this.positionAttributeLocation = GLUtils.getUniformLocation(this.gl, this.program, "a_position", false);
+        this.positionAttributeLocation = this.gl.getAttribLocation(this.program, "a_position", true);
 
         this.resolutionUniformLocation = GLUtils.getUniformLocation(this.gl, this.program, "u_resolution", true);
         this.contentsizeUniformLocation = GLUtils.getUniformLocation(this.gl, this.program, "u_contents_size", true);
@@ -592,7 +592,7 @@ class Rectangles {
 
         this.createPaletteTexture();
 
-        this.paletteLocation = GLUtils.getUniformLocation(this.gl, this.program, "u_palette", true);
+        // this.paletteLocation = GLUtils.getUniformLocation(this.gl, this.program, "u_palette", true);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -616,7 +616,7 @@ class Rectangles {
       this.gl.uniform1f(this.viz_factor1Location, rVizFactor_1);
       this.gl.uniform1f(this.viz_factor2Location, rVizFactor_2);
 
-      this.gl.uniform1i(this.paletteLocation, 1);
+      // this.gl.uniform1i(this.paletteLocation, 1);
 
       let count : number = this.nRectangleCount * 6;
 

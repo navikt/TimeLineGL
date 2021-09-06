@@ -17,15 +17,20 @@ uniform sampler2D u_palette;
 
 void main() {
 
-
   // float index = 2.0;    // Green
   // float index = 1.0;    // Red
-  float index = colorValue;   
+  
+  // float index = colorValue;   
 
-  outColor = texture(u_palette, vec2((index + 0.5) / 256.0, 0.5));
+  // outColor = texture(u_palette, vec2((index + 0.5) / 256.0, 0.5));
+
+  if (colorValue == 0.0) {
+    outColor = vec4(0.5, 1, 0, 1.0);
+  }
+  else {
+    outColor = vec4(1, colorValue/15.0, 0, 1.0);
+  }
+  
 
 }
-
-      
-     
-      
+    
