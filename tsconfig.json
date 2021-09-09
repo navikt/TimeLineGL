@@ -12,7 +12,7 @@
 //        "preserveConstEnums": true,
 //        "sourceMap": true 
     },
-    "files": [
+    "files_for_timeline": [
         "logger.ts",
         "configuration.ts",
         "gl-utils.ts",
@@ -21,6 +21,11 @@
         "text.ts",
         "radar.ts",
         "init.ts"
+       
+    ],
+    "files": [
+        "gl-utils.ts",
+        "init_flow.ts"
        
     ]
 }
