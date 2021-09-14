@@ -2,19 +2,28 @@
 
 precision highp float;
 precision mediump int;
+precision mediump usampler2D;
+precision mediump sampler2D;
 
-uniform sampler2D u_positions;
 
-in vec2 habla;
+uniform usampler2D u_positions;
+
+uniform float f_cyclic_time;
+
+in vec2 f_coord;
 
 void main() {
 
-  int nHabla_X = int(habla.x);
-  int nHabla_Y = int(habla.y);
+  ivec2 coord = ivec2(int(f_coord.x), int(f_coord.y));
 
-  ivec2 coord = ivec2(nHabla_X, nHabla_Y);
+  uvec4 upsample_new =  texelFetch(u_positions, coord, 0);
 
-  vec2 psample = texelFetch(u_positions, coord, 0).xy;
+  vec2 f_upsample_new = vec2 (upsample_new.x, upsample_new.y);
+
+  vec2 psample = f_upsample_new / float(256 * 256);
+
+
+  psample = f_cyclic_time * psample;
 
   vec2 pos_readout = (2.0 * psample) - 1.0;
 
