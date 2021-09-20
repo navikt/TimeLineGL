@@ -2,33 +2,80 @@
 
 precision highp float;
 precision mediump int;
-precision mediump usampler2D;
-precision mediump sampler2D;
 
+uniform float d_current_time;
 
-uniform usampler2D u_positions;
+in uvec2 data_final;
 
-uniform float f_cyclic_time;
+out float age_normalized;
 
-in vec2 f_coord;
 
 void main() {
 
-  ivec2 coord = ivec2(int(f_coord.x), int(f_coord.y));
-
-  uvec4 upsample_new =  texelFetch(u_positions, coord, 0);
-
-  vec2 f_upsample_new = vec2 (upsample_new.x, upsample_new.y);
-
-  vec2 psample = f_upsample_new / float(256 * 256);
+  const float TRANSITION_SPEED = 3.0;
+  const float DISPLACEMENT_SCALE = 0.20;
 
 
-  psample = f_cyclic_time * psample;
+  uint v = data_final.x;
+  uint random_data = data_final.y;
 
-  vec2 pos_readout = (2.0 * psample) - 1.0;
+  const uint mask_time_hi = 0xFFFC0000u;
+  const uint mask_time_lo = 0x0003FFF0u;
+  const uint mask_dir_hi  = 0x0000000Cu;
+  const uint mask_dir_lo  = 0x00000003u;
 
-  gl_Position = vec4(pos_readout, 0.0, 1.0);
+  uint t1_converted = (v & mask_time_hi) >> (32u - 14u);
+  uint t0_converted = (v & mask_time_lo) >> 4u;
+  uint d1_converted = (v & mask_dir_hi) >> 2u;
+  uint d0_converted = (v & mask_dir_lo);
 
-  gl_PointSize = 3.0;
+  float dr_conversion_time1 = float(t1_converted) / 6.0 / 24.0;
+  float dr_conversion_time0 = float(t0_converted) / 6.0 / 24.0;
+
+  const uint mask_time_random_hi = 0xFFFFF000u;
+  const uint mask_time_random_lo = 0x0FFFu;
+
+  uint u_random = (random_data & mask_time_random_hi) >> 12u;
+  uint u_launch_time = (random_data & mask_time_random_lo);
+
+  float d_launch_day = float (u_launch_time % 10000u);
+
+  vec2 end_position = vec2(float(d0_converted), float(d1_converted));
+
+  end_position = end_position - 1.0;
+  end_position = end_position * 0.8;
+
+
+  float displace_x = 2.0 * float(u_random % 500u)/500.0 - 1.0;
+  float displace_y = 2.0 * float(u_random / 500u  % 500u)/500.0 - 1.0;
+
+  vec2 random_displacement = vec2(displace_x, displace_y) * DISPLACEMENT_SCALE;
+  
+  vec2 d_conversion_time = vec2(dr_conversion_time0, dr_conversion_time1) + d_launch_day;
+
+  vec2 dt = d_current_time - d_conversion_time;
+
+  vec2 exp_x = exp(TRANSITION_SPEED * dt);
+  vec2 pos_mix  = exp_x / (exp_x + 1.0);
+
+  vec2 p_out = end_position * pos_mix + random_displacement;
+
+  float dr_time_since_launch = d_current_time - d_launch_day;
+
+  p_out = (dr_time_since_launch <= 0.0) ? vec2(-1.0, -1.0) : p_out;
+
+  gl_Position = vec4(p_out.x, p_out.y, 0.0, 1.0);
+
+  gl_PointSize = 7.0;
+
+
+  age_normalized = max(0.0, dr_time_since_launch);
+  age_normalized = min(age_normalized, 30.0);
+
+  age_normalized = age_normalized / 30.0;
+
+
+
 }
+
  
