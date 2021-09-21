@@ -5,9 +5,16 @@ let g_canvas: HTMLCanvasElement;
 
 let vao_final: WebGLVertexArrayObject;
 
+let indexBuffer: WebGLBuffer;
+
+let buf2: WebGLBuffer;
+
 let timeLocation: WebGLUniformLocation;
 
+let canvasSizeLocation: WebGLUniformLocation;
+
 const num_cases: number = 50000;
+
 
 
 function test_pack(t0: number, d0: number, t1: number, d1: number) : number {
@@ -58,11 +65,18 @@ function test_unpack(v: number) {
 }
 
 
+function updateBit(number: number, bitPosition: number, bitValue: number) {
+  const bitValueNormalized = bitValue ? 1 : 0;
+  const clearMask = ~(1 << bitPosition);
+  return (number & clearMask) | (bitValueNormalized << bitPosition);
+}
+
+
 function generate_random_gpu_dataset(N: number): Uint32Array {
 
-  let data: Uint32Array = new Uint32Array(N*2);
+  let data: Uint32Array = new Uint32Array(N*2*4);
 
-  for(let i: number = 0; i < N; i+= 2) {
+  for(let i: number = 0; i < N; i+= 8) {
 
     const t0: number = 50 * Math.random();
     const t1: number = 50 * Math.random();
@@ -71,12 +85,16 @@ function generate_random_gpu_dataset(N: number): Uint32Array {
     const d1: number = Math.floor(Math.random() * 3) - 1;
 
     const v0: number = test_pack(t0, d0, t1, d1);
+    let v1: number = Math.floor(Math.random() * (2**32));
 
-    // const round_trip_data = test_unpack(v);
-    // const t0_diff: number = t0 - round_trip_data['t0'];
+    for(let j: number = 0; j < 4; j++) {
+      data[i + 2 *j] = v0;
 
-    data[i+0] = v0;
-    data[i+1] = Math.floor(Math.random() * (2**32));
+      v1 = updateBit(v1, 12, j%2);
+      v1 = updateBit(v1, 13, Math.floor(j/2));
+      
+      data[i + 2 *j + 1] = v1;
+    }
 
   }
   return data;
@@ -113,11 +131,13 @@ function main(): void {
 
 
   timeLocation = gl.getUniformLocation(program, 'd_current_time')!;
+
+  canvasSizeLocation =  gl.getUniformLocation(program, 'canvas_size')!;
   
 
    const data_final_loc = gl.getAttribLocation(program, 'data_final');
 
-   var buf2 = gl.createBuffer();
+   buf2 = gl.createBuffer()!;
   
   gl.bindBuffer(gl.ARRAY_BUFFER, buf2);
   
@@ -136,12 +156,36 @@ function main(): void {
    // Tell the position attribute how to get data out of positionBuffer (ARRAY_BUFFER)
    var size = 2;          // 1 component per iteration
    var type = gl.UNSIGNED_INT;   // the data is 32bit unsigned int
-   // var normalize = false; // don't normalize the data
    var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
    var offset = 0;        // start at the beginning of the buffer
    
    gl.vertexAttribIPointer(data_final_loc, size, type, stride, offset);
-   
+
+
+   // Create index buffer
+
+  indexBuffer = gl.createBuffer()!;
+ 
+  // make this buffer the current 'ELEMENT_ARRAY_BUFFER'
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+ 
+  // Fill the current element array buffer with data
+
+  let i_data: Uint16Array = new Uint16Array(num_cases * 6);
+
+  for (let iCase = 0; iCase < num_cases; iCase++) {
+    const i: number = iCase * 6
+
+    i_data[i + 0] = 4 * iCase;
+    i_data[i + 1] = 4 * iCase + 2;
+    i_data[i + 2] = 4 * iCase + 1;
+
+    i_data[i + 3] = 4 * iCase + 2;
+    i_data[i + 4] = 4 * iCase + 1;
+    i_data[i + 5] = 4 * iCase + 3;
+  }
+
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, i_data, gl.STATIC_DRAW);
 
    requestAnimationFrame(g_render);
 
@@ -161,13 +205,23 @@ function g_render(): void {
   let current_time: number = performance.now() / 1000.0;
 
   gl.uniform1f(timeLocation, current_time);
-  
+
+  gl.uniform2ui(canvasSizeLocation, g_canvas.width, g_canvas.height);
+
+ 
   gl.bindVertexArray(vao_final);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf2);
+
+  // bind the buffer containing the indices
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 
   gl.viewport(0, 0, g_canvas.width, g_canvas.height);
   gl.clearColor(0, 0, 0.5, 1);
-  gl.clear(gl.COLOR_BUFFER_BIT);
-  gl.drawArrays(gl.POINTS, 0, num_cases);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+
+  gl.drawElements(gl.TRIANGLES, 6 * num_cases, gl.UNSIGNED_SHORT, 0);
 
   requestAnimationFrame(g_render);
 }
