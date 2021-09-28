@@ -9,6 +9,7 @@ uniform uvec2 canvas_size;
 in uvec2 data_final;
 
 out float age_normalized;
+out vec2 v_texCoord;
 
 
 void main() {
@@ -16,7 +17,7 @@ void main() {
   const float TRANSITION_SPEED = 3.0;
   const float DISPLACEMENT_SCALE = 0.10;
 
-  const float QUAD_HALF_SIZE = 0.10;
+  const vec2 QUAD_HALF_SIZE = vec2(0.012, 0.034);
 
 
   uint v = data_final.x;
@@ -71,11 +72,16 @@ void main() {
 
   float dr_time_since_launch = d_current_time - d_launch_day;
 
-  p_out = (dr_time_since_launch <= 0.0) ? vec2(-1.0, -1.0) : p_out;
+  p_out = (dr_time_since_launch <= 0.0) ? vec2(-2.0, -2.0) : p_out;
 
 
   // Spread out to create quads.
   vec2 quad_offset = vec2 (float(u_offset / 2u), float(u_offset % 2u));
+
+
+  v_texCoord = quad_offset;
+
+  
 
   quad_offset = -1.0 + 2.0 * quad_offset;
   quad_offset = quad_offset * QUAD_HALF_SIZE;
@@ -87,6 +93,19 @@ void main() {
   age_normalized = max(0.0, dr_time_since_launch);
   age_normalized = min(age_normalized, 30.0);
   age_normalized = age_normalized / 30.0;
+  
+  float f_digit = 9.0 - (age_normalized * 10.0);
+
+  float y_pos0 = f_digit * 361.0 / 10.0;
+  float y_pos1 = y_pos0 + 361.0/10.0;
+
+  y_pos0 = y_pos0 / 361.0;
+  y_pos1 = y_pos1 / 361.0;
+
+  // v_texCoord.x = 0.5 * v_texCoord.x;
+
+  v_texCoord.y =  y_pos0 * (1.0 - v_texCoord.y) + y_pos1 *  v_texCoord.y;
+
 
 }
 

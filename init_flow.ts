@@ -3,19 +3,34 @@
 let gl: WebGL2RenderingContext;
 let g_canvas: HTMLCanvasElement;
 
-let vao_final: WebGLVertexArrayObject;
+let textures: WebGLTexture[] = [];
 
-let indexBuffer: WebGLBuffer;
 
-let buf2: WebGLBuffer;
+/* Data for cases rendering begin*/
+
+let vao_cases: WebGLVertexArrayObject;
+
+let indexBuffer_cases: WebGLBuffer;
+
+let buf2_cases: WebGLBuffer;
 
 let timeLocation: WebGLUniformLocation;
 
 let canvasSizeLocation: WebGLUniformLocation;
 
+let diffuse: WebGLUniformLocation;
+let diffuse2: WebGLUniformLocation;
+
+let cases_program: number;
+
 const num_cases: number = 50000;
 
+/* Data for cases rendering end*/
 
+///////////////////////////////////////////////////////////////////////////
+//
+//    updateBit
+//
 
 function test_pack(t0: number, d0: number, t1: number, d1: number) : number {
 
@@ -30,40 +45,12 @@ function test_pack(t0: number, d0: number, t1: number, d1: number) : number {
   const packed_value: number = (t1_converted << (32 - 14)) | (t0_converted << (32 - 14 - 14)) | (d1_converted << 2) | d0_converted;
 
   return packed_value;
-
 }
 
-
-function test_unpack(v: number) {
-  const mask_time_hi: number = 0b11111111111111000000000000000000;
-  // FFFC 0000 
-
-  const mask_time_lo: number = 0b00000000000000111111111111110000;
-  // 0003 FFF0
-
-  const mask_dir_hi: number =  0b00000000000000000000000000001100;
-  // 0000 000C 
-
-  const mask_dir_lo: number  = 0b00000000000000000000000000000011;
-  // 0000 0003
-
-
-
-  const t1_converted: number = (v & mask_time_hi) >> (32 - 14);
-  const t0_converted: number = (v & mask_time_lo) >> 4;
-  const d1_converted: number = (v & mask_dir_hi) >> 2;
-  const d0_converted: number = (v & mask_dir_lo);
-  
-  
-  const t1: number = t1_converted / 6.0 / 24.0;
-  const t0: number = t0_converted / 6.0 / 24.0;
-  
-  const d1: number = d1_converted - 1;
-  const d0: number = d0_converted - 1;
-
-  return {'t1': t1, 't0': t0, 'd1': d1, 'd0':d0};
-}
-
+///////////////////////////////////////////////////////////////////////////
+//
+//    updateBit
+//
 
 function updateBit(number: number, bitPosition: number, bitValue: number) {
   const bitValueNormalized = bitValue ? 1 : 0;
@@ -71,6 +58,10 @@ function updateBit(number: number, bitPosition: number, bitValue: number) {
   return (number & clearMask) | (bitValueNormalized << bitPosition);
 }
 
+///////////////////////////////////////////////////////////////////////////
+//
+//    generate_random_gpu_dataset
+//
 
 function generate_random_gpu_dataset(N: number): Uint32Array {
 
@@ -100,24 +91,60 @@ function generate_random_gpu_dataset(N: number): Uint32Array {
   return data;
 }
 
+///////////////////////////////////////////////////////////////////////////
+//
+//    loadImage
+//
+
+function loadImage(url: string, callback:any) {
+  var image = new Image();
+  image.src = url;
+  image.onload = callback;
+  return image;
+}
+
+///////////////////////////////////////////////////////////////////////////
+//
+//    loadImages
+//
+
+function loadImages(urls: string[], callback: any) {
+  
+  let images: HTMLImageElement[] = [];
+  var imagesToLoad = urls.length;
+ 
+  // Called each time an image finished loading.
+  var onImageLoad = function() {
+    --imagesToLoad;
+    // If all the images are loaded call the callback.
+    if (imagesToLoad == 0) {
+      callback(images);
+    }
+  };
+ 
+  for (var ii = 0; ii < imagesToLoad; ++ii) {
+    var image = loadImage(urls[ii], onImageLoad);
+    images.push(image);
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////
+//
+//    main
+//
 
 function main(): void {
+  loadImages(["textures/texture_out.jpg", "textures/num_vertical.png"], prepare);
+}
+
+///////////////////////////////////////////////////////////////////////////
+//
+//    prepare_cases
+//
+
+function prepare_cases() : void {
 
   const data_final: Uint32Array = generate_random_gpu_dataset(num_cases);
-
-  g_canvas = <HTMLCanvasElement> document.getElementById("c");
-
-  if (g_canvas.getContext("webgl2") == null) {
-    return;
-  }
-  
-  gl = g_canvas.getContext("webgl2")!;
-
-  var width = g_canvas.clientWidth;
-  var height = g_canvas.clientHeight;
-  
-  g_canvas.width = width;
-  g_canvas.height = height;
 
   const vertex_source = get_synch("shaders/draw.vert")!;
   const vertexShader : number | null = GLUtils.createShader(gl, gl.VERTEX_SHADER, vertex_source);
@@ -125,49 +152,49 @@ function main(): void {
   const fragment_source = get_synch("shaders/draw.frag")!;
   const fragmentShader : number | null = GLUtils.createShader(gl, gl.FRAGMENT_SHADER, fragment_source);
 
-  let program = GLUtils.createProgram(gl, vertexShader, fragmentShader);
+  cases_program = GLUtils.createProgram(gl, vertexShader, fragmentShader);
 
-  gl.useProgram(program);
+  gl.useProgram(cases_program);
 
+  timeLocation = gl.getUniformLocation(cases_program, 'd_current_time')!;
 
-  timeLocation = gl.getUniformLocation(program, 'd_current_time')!;
+  canvasSizeLocation =  gl.getUniformLocation(cases_program, 'canvas_size')!;
 
-  canvasSizeLocation =  gl.getUniformLocation(program, 'canvas_size')!;
+  diffuse = gl.getUniformLocation(cases_program, "diffuse")!;
+  diffuse2 = gl.getUniformLocation(cases_program, "diffuse2")!;
+
+  const data_final_loc = gl.getAttribLocation(cases_program, 'data_final');
+
+  buf2_cases = gl.createBuffer()!;
   
-
-   const data_final_loc = gl.getAttribLocation(program, 'data_final');
-
-   buf2 = gl.createBuffer()!;
-  
-  gl.bindBuffer(gl.ARRAY_BUFFER, buf2);
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf2_cases);
   
   gl.bufferData(gl.ARRAY_BUFFER, data_final, gl.STATIC_DRAW);
     
     
   // create a vertex array object (attribute state)
-  vao_final = gl.createVertexArray()!;
+  vao_cases = gl.createVertexArray()!;
 
   // and make it the one we're currently working with
-  gl.bindVertexArray(vao_final);
+  gl.bindVertexArray(vao_cases);
 
   gl.enableVertexAttribArray(data_final_loc);
-  
-   
+     
    // Tell the position attribute how to get data out of positionBuffer (ARRAY_BUFFER)
    var size = 2;          // 1 component per iteration
    var type = gl.UNSIGNED_INT;   // the data is 32bit unsigned int
    var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
    var offset = 0;        // start at the beginning of the buffer
    
-   gl.vertexAttribIPointer(data_final_loc, size, type, stride, offset);
+  gl.vertexAttribIPointer(data_final_loc, size, type, stride, offset);
 
 
-   // Create index buffer
+  // Create index buffer
 
-  indexBuffer = gl.createBuffer()!;
+  indexBuffer_cases = gl.createBuffer()!;
  
   // make this buffer the current 'ELEMENT_ARRAY_BUFFER'
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer_cases);
  
   // Fill the current element array buffer with data
 
@@ -186,11 +213,58 @@ function main(): void {
   }
 
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, i_data, gl.STATIC_DRAW);
+}
 
-   requestAnimationFrame(g_render);
+///////////////////////////////////////////////////////////////////////////
+//
+//    prepare
+//
+
+function prepare(images: HTMLImageElement[]) {
+
+  g_canvas = <HTMLCanvasElement> document.getElementById("c");
+
+  if (g_canvas.getContext("webgl2") == null) {
+    return;
+  }
+  
+  gl = g_canvas.getContext("webgl2")!;
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+
+  var width = g_canvas.clientWidth;
+  var height = g_canvas.clientHeight;
+  
+  g_canvas.width = width;
+  g_canvas.height = height;
+
+  // create 2 textures
+  for (var ii = 0; ii < 2; ++ii) {
+    
+    let texture:WebGLTexture = gl.createTexture()!;
+    
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, images[ii]);
+
+    // add the texture to the array of textures.
+    textures.push(texture);
+  }
+
+  prepare_cases();
+
+  requestAnimationFrame(g_render);
 
 }
 
+///////////////////////////////////////////////////////////////////////////
+//
+//    get_synch
+//
 
 function get_synch(url: string): string|null {
   var req = new XMLHttpRequest();
@@ -199,33 +273,51 @@ function get_synch(url: string): string|null {
   return (req.status == 200) ? req.responseText : null;
 };
 
+///////////////////////////////////////////////////////////////////////////
+//
+//    draw_cases
+//
 
-function g_render(): void {
-
+function draw_cases(): void {
   let current_time: number = performance.now() / 1000.0;
 
-  gl.uniform1f(timeLocation, current_time);
+  gl.useProgram(cases_program);
 
+  gl.uniform1f(timeLocation, current_time);
   gl.uniform2ui(canvasSizeLocation, g_canvas.width, g_canvas.height);
 
- 
-  gl.bindVertexArray(vao_final);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, textures[0]);
+  gl.uniform1i(diffuse, 0);
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, buf2);
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D, textures[1]);
+  gl.uniform1i(diffuse2, 1); // Bind our texture to the texture slot 0
+ 
+  gl.bindVertexArray(vao_cases);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf2_cases);
 
   // bind the buffer containing the indices
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer_cases);
+
+  gl.drawElements(gl.TRIANGLES, 6 * num_cases, gl.UNSIGNED_SHORT, 0);
+}
+
+///////////////////////////////////////////////////////////////////////////
+//
+//    g_render
+//
+
+function g_render(): void {
 
   gl.viewport(0, 0, g_canvas.width, g_canvas.height);
   gl.clearColor(0, 0, 0.5, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-
-  gl.drawElements(gl.TRIANGLES, 6 * num_cases, gl.UNSIGNED_SHORT, 0);
+  draw_cases();
 
   requestAnimationFrame(g_render);
 }
 
 main();
-
-

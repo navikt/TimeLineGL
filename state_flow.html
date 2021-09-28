@@ -33,6 +33,59 @@
             text-shadow: 0px 0px 5px white;
         }
 
+        #overlay_right_top {
+            position: absolute;
+            left: 80%;
+            top: 5%;
+            background-color: rgba(1,1,1,0.1);    
+            color: white;
+            font-family: monospace;
+            padding: 1em;
+            border-radius: 0em;
+            border: 0px solid #f00;
+            text-shadow: 0px 0px 5px white;
+        }
+
+        #overlay_right_bottom {
+            position: absolute;
+            left: 80%;
+            top: 85%;
+            background-color: rgba(1,1,1,0.1);    
+            color: white;
+            font-family: monospace;
+            padding: 1em;
+            border-radius: 0em;
+            border: 0px solid #f00;
+            text-shadow: 0px 0px 5px white;
+        }
+
+
+        #overlay_left_top {
+            position: absolute;
+            left: 15%;
+            top: 5%;
+            background-color: rgba(1,1,1,0.1);    
+            color: white;
+            font-family: monospace;
+            padding: 1em;
+            border-radius: 0em;
+            border: 0px solid #f00;
+            text-shadow: 0px 0px 5px white;
+        }
+
+        #overlay_left_bottom {
+            position: absolute;
+            left: 15%;
+            top: 85%;
+            background-color: rgba(1,1,1,0.1);    
+            color: white;
+            font-family: monospace;
+            padding: 1em;
+            border-radius: 0em;
+            border: 0px solid #f00;
+            text-shadow: 0px 0px 5px white;
+        }
+
         #overlay_center_bottom {
             position: absolute;
             left: 50%;
@@ -102,21 +155,44 @@
         <div class="container">
                 <canvas id="c"></canvas>
                 <div id="overlay_center_top">
-                  <div id ="Colour_True">AG JA</div>
-                  <div id="Colour_No_Data">SM NO_DATA</div>
+                  <div id ="Colour_True">AG  JA</div>
+                  <div id="Colour_No_Data">SM ---</div>
                 </div>
+
+                <div id="overlay_right_top">
+                    <div id ="Colour_True">AG  JA</div>
+                    <div id="Colour_True">SM  JA</div>
+                  </div>
+
+                <div id="overlay_left_bottom">
+                    <div id ="Colour_False">AG NEI</div>
+                    <div id="Colour_False">SM NEI</div>
+                </div>
+
+                <div id="overlay_right_bottom">
+                <div id ="Colour_False">AG NEI</div>
+                <div id="Colour_True">SM  JA</div>
+                </div>
+
+
+
+                <div id="overlay_left_top">
+                    <div id ="Colour_True">AG  JA</div>
+                    <div id="Colour_False">SM NEI</div>
+                </div>
+
                 <div id="overlay_center_bottom">
                     <div id="Colour_False">AG NEI</div>
-                    <div id="Colour_No_Data">SM NO_DATA</div>
+                    <div id="Colour_No_Data">SM ---</div>
                 </div>
                 <div id="overlay_left_center">
-                    <div id="Colour_No_Data">AG NO_DATA</div>
+                    <div id="Colour_No_Data">AG ---</div>
                     <div id="Colour_False">SM NEI</div>
                 </div>
 
                 <div id="overlay_right_center">
-                    <div id="Colour_No_Data">AG NO_DATA</div>
-                    <div id="Colour_True">SM JA</div>
+                    <div id="Colour_No_Data">AG ---</div>
+                    <div id="Colour_True">SM  JA</div>
                 </div>
 
 
