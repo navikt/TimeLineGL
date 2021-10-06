@@ -65,9 +65,9 @@ function updateBit(number: number, bitPosition: number, bitValue: number) {
 
 function generate_random_gpu_dataset(N: number): Uint32Array {
 
-  let data: Uint32Array = new Uint32Array(N*2*4);
+  let data: Uint32Array = new Uint32Array(N*2*8);
 
-  for(let i: number = 0; i < N; i+= 8) {
+  for(let i: number = 0; i < N; i+= 16) {
 
     const t0: number = 50 * Math.random();
     const t1: number = 50 * Math.random();
@@ -78,11 +78,12 @@ function generate_random_gpu_dataset(N: number): Uint32Array {
     const v0: number = test_pack(t0, d0, t1, d1);
     let v1: number = Math.floor(Math.random() * (2**32));
 
-    for(let j: number = 0; j < 4; j++) {
+    for(let j: number = 0; j < 8; j++) {
       data[i + 2 *j] = v0;
 
       v1 = updateBit(v1, 12, j%2);
-      v1 = updateBit(v1, 13, Math.floor(j/2));
+      v1 = updateBit(v1, 13, Math.floor(j/2) & 1);
+      v1 = updateBit(v1, 14, Math.floor(j/4));
       
       data[i + 2 *j + 1] = v1;
     }
@@ -198,18 +199,27 @@ function prepare_cases() : void {
  
   // Fill the current element array buffer with data
 
-  let i_data: Uint16Array = new Uint16Array(num_cases * 6);
+  let i_data: Uint16Array = new Uint16Array(num_cases * 12);
 
   for (let iCase = 0; iCase < num_cases; iCase++) {
-    const i: number = iCase * 6
+    const i: number = iCase * 12
 
-    i_data[i + 0] = 4 * iCase;
-    i_data[i + 1] = 4 * iCase + 2;
-    i_data[i + 2] = 4 * iCase + 1;
+    i_data[i + 0] = 8 * iCase;
+    i_data[i + 1] = 8 * iCase + 2;
+    i_data[i + 2] = 8 * iCase + 1;
 
-    i_data[i + 3] = 4 * iCase + 2;
-    i_data[i + 4] = 4 * iCase + 1;
-    i_data[i + 5] = 4 * iCase + 3;
+    i_data[i + 3] = 8 * iCase + 2;
+    i_data[i + 4] = 8 * iCase + 1;
+    i_data[i + 5] = 8 * iCase + 3;
+
+    i_data[i + 6] = 8 * iCase + 4;
+    i_data[i + 7] = 8 * iCase + 2 + 4;
+    i_data[i + 8] = 8 * iCase + 1 + 4;
+
+    i_data[i + 9] = 8 * iCase + 2 + 4;
+    i_data[i + 10] = 8 * iCase + 1 + 4;
+    i_data[i + 11] = 8 * iCase + 3 + 4;
+
   }
 
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, i_data, gl.STATIC_DRAW);
@@ -279,7 +289,7 @@ function get_synch(url: string): string|null {
 //
 
 function draw_cases(): void {
-  let current_time: number = performance.now() / 1000.0;
+  let current_time: number = performance.now() / 500.0;
 
   gl.useProgram(cases_program);
 
@@ -301,7 +311,7 @@ function draw_cases(): void {
   // bind the buffer containing the indices
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer_cases);
 
-  gl.drawElements(gl.TRIANGLES, 6 * num_cases, gl.UNSIGNED_SHORT, 0);
+  gl.drawElements(gl.TRIANGLES, 12 * num_cases, gl.UNSIGNED_SHORT, 0);
 }
 
 ///////////////////////////////////////////////////////////////////////////

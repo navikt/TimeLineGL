@@ -23,7 +23,8 @@ void main() {
   vec4 outColor_b = texture(diffuse2, v_texCoord);
 
 
-  float f_toggle = (t > 1.5) ? 1.0 : 0.0;
+  // float f_toggle = (t > 9.5) ? 1.0 : 0.0;
+  float f_toggle = 0.0;
 
   outColor = f_toggle * outColor_a +  (1.0 - f_toggle) * outColor_b;
 
